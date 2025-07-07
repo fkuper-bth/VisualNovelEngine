@@ -61,7 +61,7 @@ class VisualNovelEngineImpl(
     override fun loadCharacterAsset(name: String, bitmap: ImageBitmap, position: CharacterPosition) {
         _sceneState.value = _sceneState.value.copy(
             characters = _sceneState.value.characters.toMutableList().apply {
-                add(RenderedCharacter(name, bitmap, position))
+                add(RenderedCharacter(name, bitmap, position = position))
             }
         )
     }
@@ -124,6 +124,9 @@ class VisualNovelEngineImpl(
                 }
 
                 _sceneState.value = _sceneState.value.copy(
+                    activeCharacter = _sceneState.value.characters.firstOrNull {
+                        it.name == currentEvent.characterName
+                    },
                     textBoxes = _sceneState.value.textBoxes.toMutableList().apply {
                         currentEvent.toRenderedText()?.let(::add)
                     }

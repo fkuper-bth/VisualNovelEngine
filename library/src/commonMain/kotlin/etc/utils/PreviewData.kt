@@ -9,7 +9,7 @@ internal object PreviewData {
             value = "This is a test scene to demonstrate the visual novel engine."
         ),
         StoryPassageNovelEvent.CharacterAction(
-            characterName = "banker_left",
+            characterName = "banker_secondary",
             expression = "Smiling",
             text = "Hello Player! I'm happy to be here, but I do not have much to say."
         ),
@@ -17,7 +17,7 @@ internal object PreviewData {
             value = "Hi Banker! Nice to see you."
         ),
         StoryPassageNovelEvent.CharacterAction(
-            characterName = "banker_center",
+            characterName = "banker_main",
             expression = "Smiling",
             text = "I'm the main banker, so you should pay some respect to me."
         ),

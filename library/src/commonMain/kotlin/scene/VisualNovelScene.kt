@@ -1,11 +1,11 @@
 package scene
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,6 +19,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
@@ -28,9 +29,11 @@ import animation.NovelAnimationService
 import api.VisualNovelEngine
 import etc.di.sharedModule
 import etc.utils.PreviewData
+import etc.utils.fadingEdge
 import fk.visualnovel.engine.library.generated.resources.Res
+import fk.visualnovel.engine.library.generated.resources.bank_character_alt_cropped
+import fk.visualnovel.engine.library.generated.resources.bank_character_cropped
 import fk.visualnovel.engine.library.generated.resources.bank_environment
-import fk.visualnovel.engine.library.generated.resources.bank_full_character
 import model.CharacterPosition
 import model.RenderedText
 import model.SceneRenderState
@@ -68,12 +71,21 @@ fun VisualNovelScene(
         // Text & Character rendered over the environment background
         Column(modifier.fillMaxSize()) {
             if (scene.textBoxes.isNotEmpty()) {
+                val colorStops = arrayOf(
+                    0f to Color.Transparent,
+                    0.03f to Color.Red, 0.97f to Color.Red,
+                    1f to Color.Transparent
+                )
+                val topBottomFade = Brush.verticalGradient(colorStops = colorStops)
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
-                        .verticalScroll(scrollState)
+                        .fadingEdge(topBottomFade)
                         .fillMaxWidth()
-                        .padding(16.dp)
+                        .fillMaxHeight(fraction = 0.5f)
+                        .weight(1f)
+                        .verticalScroll(scrollState)
+                        .padding(2.dp)
                 ) {
                     scene.textBoxes.forEach {
                         when (it) {
@@ -127,46 +139,37 @@ fun VisualNovelScene(
                         }
                     }
                 }
-            }
-
-            // Spacer to push characters to the bottom if there's a text box
-            // Or just to act as the main content area between text and characters
-            Spacer(modifier = Modifier.weight(1f))
-
-            if (scene.characters.isNotEmpty()) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .fillMaxHeight(0.5f)
-                        .padding(bottom = 16.dp, start = 16.dp, end = 16.dp),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.Bottom
-                ) {
-                    // Filter for characters that should be visible
-                    val visibleCharacters = scene.characters.filter { it.opacity > 0f }
-
-                    visibleCharacters.forEach { character ->
-                        val alignmentModifier = when (character.position) {
-                            CharacterPosition.LEFT -> Modifier.weight(1f).align(Alignment.Bottom)
-                            CharacterPosition.CENTER -> Modifier.weight(1f).align(Alignment.Bottom)
-                            CharacterPosition.RIGHT -> Modifier.weight(1f).align(Alignment.Bottom)
-                        }
-
-                        Image(
-                            bitmap = character.bitmap,
-                            contentDescription = character.name,
-                            modifier = Modifier
-                                .fillMaxHeight()
-                                .then(if (visibleCharacters.size > 1) alignmentModifier else Modifier.align(Alignment.Bottom))
-                                .graphicsLayer(alpha = character.opacity)
-                                .padding(horizontal = 4.dp),
-                            contentScale = ContentScale.Fit
-                        )
-                    }
+                // TODO: improve scroll animation to consider height event views
+                LaunchedEffect(scene.textBoxes.size) {
+                    scrollState.animateScrollTo(scrollState.maxValue)
                 }
             } else {
-                // If no characters, ensure the layout still respects the bottom portion
-                Spacer(Modifier.fillMaxHeight(0.5f))
+                Spacer(Modifier.weight(1f))
+            }
+
+            Crossfade(
+                targetState = scene.activeCharacter,
+                animationSpec = tween(500),
+                modifier = Modifier.fillMaxHeight(0.5f)
+            ) { activeCharacter ->
+                if (activeCharacter != null) {
+                    val characterPosition = when (activeCharacter.position) {
+                        CharacterPosition.CENTER -> Alignment.BottomCenter
+                        CharacterPosition.LEFT -> Alignment.BottomStart
+                        CharacterPosition.RIGHT -> Alignment.BottomEnd
+                    }
+                    Image(
+                        bitmap = activeCharacter.bitmap,
+                        contentDescription = activeCharacter.name,
+                        alignment = characterPosition,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .graphicsLayer(alpha = activeCharacter.opacity),
+                        contentScale = ContentScale.FillHeight
+                    )
+                } else {
+                    Spacer(Modifier.fillMaxHeight(0.5f))
+                }
             }
         }
     }
@@ -199,24 +202,20 @@ private fun ExampleScenePreview() {
         val visualNovelEngine: VisualNovelEngine = koinInject()
         val scene by visualNovelEngine.sceneState.collectAsState()
 
-        val characterImage = imageResource(Res.drawable.bank_full_character)
+        val mainCharacterImage = imageResource(Res.drawable.bank_character_cropped)
+        val secondaryCharacterImage = imageResource(Res.drawable.bank_character_alt_cropped)
         val environmentImage = imageResource(Res.drawable.bank_environment)
 
         LaunchedEffect(Unit) {
             visualNovelEngine.loadCharacterAsset(
-                name = "banker_left",
-                bitmap = characterImage,
+                name = "banker_main",
+                bitmap = mainCharacterImage,
                 position = CharacterPosition.LEFT
             )
             visualNovelEngine.loadCharacterAsset(
-                name = "banker_right",
-                bitmap = characterImage,
+                name = "banker_secondary",
+                bitmap = secondaryCharacterImage,
                 position = CharacterPosition.RIGHT
-            )
-            visualNovelEngine.loadCharacterAsset(
-                name = "banker_center",
-                bitmap = characterImage,
-                position = CharacterPosition.CENTER
             )
             visualNovelEngine.loadEnvironmentAsset(
                 name = "bank",
@@ -224,7 +223,6 @@ private fun ExampleScenePreview() {
             )
             visualNovelEngine.handleStoryPassagePlay(PreviewData.passageData)
         }
-
         VisualNovelScene(scene)
     }
 }

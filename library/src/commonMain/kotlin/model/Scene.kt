@@ -4,13 +4,17 @@ import androidx.compose.ui.graphics.ImageBitmap
 import data.model.StoryPassageNovelEvent
 import kotlin.uuid.Uuid
 
-enum class CharacterPosition { LEFT, CENTER, RIGHT }
+enum class CharacterPosition {
+    LEFT,
+    CENTER,
+    RIGHT
+}
 
 data class RenderedCharacter(
     val name: String,
     val bitmap: ImageBitmap,
-    val position: CharacterPosition,
-    val opacity: Float = 1f
+    val opacity: Float = 1f,
+    val position: CharacterPosition = CharacterPosition.CENTER
 )
 
 data class RenderedEnvironment(
@@ -67,5 +71,6 @@ fun StoryPassageNovelEvent.toRenderedText(): RenderedText? {
 data class SceneRenderState(
     val environment: RenderedEnvironment? = null,
     val characters: List<RenderedCharacter> = emptyList(),
+    val activeCharacter: RenderedCharacter? = null,
     val textBoxes: List<RenderedText> = emptyList()
 )
