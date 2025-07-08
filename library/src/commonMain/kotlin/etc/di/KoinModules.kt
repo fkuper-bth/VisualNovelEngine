@@ -17,7 +17,6 @@ val sharedModule = module {
     factory<VisualNovelEngine> {
         VisualNovelEngineImpl(
             animationService = get(),
-            assetLoader = null,
             soundEngine = null
         )
     }

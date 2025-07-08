@@ -1,4 +1,4 @@
-package scene.view
+package scene.composables
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect

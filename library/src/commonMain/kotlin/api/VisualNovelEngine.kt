@@ -1,18 +1,13 @@
 package api
 
-import androidx.compose.ui.graphics.ImageBitmap
 import animation.AnimationCommand
 import animation.NovelAnimationService
 import data.model.StoryPassageNovelEvent
+import fk.story.engine.main.contract.toNovelEventPlayHistory
+import fk.story.engine.main.utils.StoryPassagePlayResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import etc.utils.AssetLoader
-import fk.story.engine.main.contract.toNovelEventPlayHistory
-import fk.story.engine.main.utils.StoryPassagePlayResult
-import model.CharacterPosition
-import model.RenderedCharacter
-import model.RenderedEnvironment
 import model.SceneRenderState
 import model.toRenderedText
 import sound.SoundEngine
@@ -36,16 +31,11 @@ interface VisualNovelEngine {
      */
     val isBusy: StateFlow<Boolean>
 
-    // TODO: improve asset loading interface here later
-    // this is just for testing purposes
-    fun loadCharacterAsset(name: String, bitmap: ImageBitmap, position: CharacterPosition)
-
-    fun loadEnvironmentAsset(name: String, bitmap: ImageBitmap)
+    fun loadVisualNovelSceneState(state: SceneRenderState)
 }
 
 class VisualNovelEngineImpl(
     private val animationService: NovelAnimationService,
-    private val assetLoader: AssetLoader? = null,
     private val soundEngine: SoundEngine? = null
 ) : VisualNovelEngine {
     private val _sceneState = MutableStateFlow(SceneRenderState())
@@ -58,18 +48,8 @@ class VisualNovelEngineImpl(
     private var currentPassageEvents = emptyList<StoryPassageNovelEvent>()
     private var currentPassageAccumulatedLinks = mutableListOf<StoryPassageNovelEvent.Link>()
 
-    override fun loadCharacterAsset(name: String, bitmap: ImageBitmap, position: CharacterPosition) {
-        _sceneState.value = _sceneState.value.copy(
-            characters = _sceneState.value.characters.toMutableList().apply {
-                add(RenderedCharacter(name, bitmap, position = position))
-            }
-        )
-    }
-
-    override fun loadEnvironmentAsset(name: String, bitmap: ImageBitmap) {
-        _sceneState.value = _sceneState.value.copy(
-            environment = RenderedEnvironment(name, bitmap)
-        )
+    override fun loadVisualNovelSceneState(state: SceneRenderState) {
+        _sceneState.value = state
     }
 
     override fun reset() {

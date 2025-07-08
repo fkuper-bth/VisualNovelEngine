@@ -1,5 +1,6 @@
 package animation
 
+import androidx.compose.ui.Alignment
 import kotlinx.coroutines.flow.StateFlow
 import kotlin.uuid.Uuid
 
@@ -10,6 +11,14 @@ sealed class AnimationCommandIdentifier(
     data class Text(
         override val id: Uuid
     ) : AnimationCommandIdentifier("AnimateText", id)
+
+    data class SpriteAlpha(
+        override val id: Uuid
+    ) : AnimationCommandIdentifier("AnimateSpriteAlpha", id)
+
+    data class SpriteCharacterPosition(
+        override val id: Uuid
+    ) : AnimationCommandIdentifier("AnimateSpriteCharacterPosition", id)
 
     override fun toString(): String {
         return "${idPrefix}_${id}"
@@ -25,21 +34,30 @@ sealed interface AnimationCommand {
     data class AnimateText(
         val id: Uuid,
         val text: String,
-        val targetId: String? = null // Optional: to identify where this text should be rendered if multiple text areas
-        // Add other parameters like animationDelayMillis if they should be controlled by the command
-        // Alternatively, the Composable rendering this can have its own default animation speed.
+        val animationDelayMillis: Long = 25L,
     ) : AnimationCommand {
         override val commandId = AnimationCommandIdentifier.Text(id)
     }
 
-    // Example for a future animation type:
-    // data class AnimateSpriteAlpha(
-    //     override val id: String,
-    //     val spriteId: String,
-    //     val fromAlpha: Float,
-    //     val toAlpha: Float,
-    //     val durationMillis: Long
-    // ) : AnimationCommand
+    data class AnimateSpriteAlpha(
+        val id: Uuid,
+        val spriteName: String,
+        val fromAlpha: Float,
+        val toAlpha: Float,
+        val durationMillis: Long
+    ) : AnimationCommand {
+        override val commandId = AnimationCommandIdentifier.SpriteAlpha(id)
+    }
+
+    data class AnimateSpriteCharacterPosition(
+        val id: Uuid,
+        val spriteName: String,
+        val fromAlignment: Alignment,
+        val toAlignment: Alignment,
+        val durationMillis: Long
+    ) : AnimationCommand {
+        override val commandId = AnimationCommandIdentifier.SpriteCharacterPosition(id)
+    }
 }
 
 interface NovelAnimationService {

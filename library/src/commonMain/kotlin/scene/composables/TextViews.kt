@@ -1,4 +1,4 @@
-package scene.view
+package scene.composables
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.PaddingValues
