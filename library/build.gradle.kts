@@ -1,4 +1,3 @@
-import com.vanniktech.maven.publish.SonatypeHost
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -37,12 +36,12 @@ kotlin {
     // web target
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
-        outputModuleName = "composeApp"
+        outputModuleName = "visualNovelEngine"
         browser {
             val rootDirPath = project.rootDir.path
             val projectDirPath = project.projectDir.path
             commonWebpackConfig {
-                outputFileName = "composeApp.js"
+                outputFileName = "visualNovelEngine.js"
                 devServer = (devServer ?: KotlinWebpackConfig.DevServer()).apply {
                     static = (static ?: mutableListOf()).apply {
                         // Serve sources to debug inside browser
@@ -52,9 +51,9 @@ kotlin {
                 }
             }
             testTask {
-                useKarma {
-                    useSafari()
-                }
+                // skip tests for now since we can't be sure which browsers are installed in
+                // the runner's environment
+                enabled = false
             }
         }
         binaries.executable()
@@ -100,7 +99,7 @@ kotlin {
 }
 
 android {
-    namespace = "org.jetbrains.kotlinx.multiplatform.library.template"
+    namespace = "org.hhn.fk.visualnovel.engine"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
@@ -116,9 +115,10 @@ dependencies {
 }
 
 mavenPublishing {
-    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+    publishToMavenCentral()
 
-    signAllPublications()
+    // publishing only locally for now
+    // signAllPublications()
 
     coordinates(group.toString(), "library", version.toString())
 
@@ -160,6 +160,6 @@ repositories {
     }
     mavenCentral()
 
-    // local repository (currently used for fetching my story engine)
+    // local repository
     mavenLocal()
 }

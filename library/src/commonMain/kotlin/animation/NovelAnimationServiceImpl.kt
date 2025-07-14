@@ -1,72 +1,77 @@
 package animation
 
+import data.model.assets.Animation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-class NovelAnimationServiceImpl : NovelAnimationService {
-    private val _activeAnimations = MutableStateFlow<List<AnimationCommand>>(emptyList())
-    override val activeAnimations: StateFlow<List<AnimationCommand>> = _activeAnimations.asStateFlow()
+class NovelAnimationServiceImpl() : NovelAnimationService {
+    private val _activeAnimations = MutableStateFlow<List<Animation>>(emptyList())
+    override val activeAnimations: StateFlow<List<Animation>> = _activeAnimations.asStateFlow()
 
-    private val pendingCommandsInCurrentBatch = mutableSetOf<AnimationCommandIdentifier>()
-    private var currentBatchCompletionCallback: (() -> Unit)? = null
+    private val pendingAnimationsInCurrentBatch = mutableSetOf<Animation>()
+    private var currentBatchCompletionCallback: ((playedAnimations: List<Animation>) -> Unit)? = null
+
+    private val successfullyPlayedAnimations: MutableList<Animation> = mutableListOf()
 
     override fun playAnimationBatch(
-        vararg commands: AnimationCommand,
-        onAllAnimationsComplete: () -> Unit
+        animations: List<Animation>,
+        // TODO: timeout mechanism for this callback?
+        onAllAnimationsComplete: (playedAnimations: List<Animation>) -> Unit
     ) {
-        // Check if command batch contains duplicate IDs
-        val distinctIds = commands.map(AnimationCommand::commandId).toSet()
-        if (distinctIds.size < commands.size) {
-            val duplicateIds = commands
-                .groupingBy(AnimationCommand::commandId)
+        val distinctIds = animations.map { it.id }.toSet()
+        if (distinctIds.size < animations.size) {
+            val duplicateIds = animations
+                .groupingBy { it.id }
                 .eachCount()
                 .filter { it.value > 1 }.keys
-            val message = "Animation batch cannot contain duplicate command IDs. Found duplicates for IDs: $duplicateIds"
+            val message = "Animation batch contained duplicate IDs. Found duplicates for: $duplicateIds"
             throw IllegalArgumentException(message)
         }
 
-        // This implementation assumes one batch is processed at a time for completion tracking.
-        // If a new batch is played, it replaces the current one.
-        _activeAnimations.value = commands.toList()
+        _activeAnimations.value = animations
+        pendingAnimationsInCurrentBatch.clear()
+        currentBatchCompletionCallback = null
 
-        pendingCommandsInCurrentBatch.clear()
-        currentBatchCompletionCallback = null // Clear previous callback
-
-        if (commands.isNotEmpty()) {
-            pendingCommandsInCurrentBatch.addAll(commands.map(AnimationCommand::commandId))
+        if (animations.isNotEmpty()) {
+            pendingAnimationsInCurrentBatch.addAll(animations)
             currentBatchCompletionCallback = onAllAnimationsComplete
         } else {
-            // If the batch is empty, call completion immediately.
-            onAllAnimationsComplete()
+            onAllAnimationsComplete(emptyList())
         }
     }
 
-    override fun notifyAnimationComplete(commandId: AnimationCommandIdentifier) {
-        val removed = pendingCommandsInCurrentBatch.remove(commandId)
+    override fun notifyAnimationComplete(animation: Animation) {
+        val removed = pendingAnimationsInCurrentBatch.remove(animation)
         if (!removed) {
-            throw IllegalArgumentException("Received notification for unknown command ID: $commandId")
+            val message = "Received notification for unknown animation: ${animation.id}"
+            throw IllegalArgumentException(message)
         }
+
+        // Add the completed command to the list of successfully played commands
+        // to allow the VisualNovelEngine to perform any necessary state updates
+        successfullyPlayedAnimations.add(animation)
 
         // Update the activeAnimations flow to remove the completed command.
         // This ensures the flow reflects commands that are still supposed to be animating.
         _activeAnimations.update { currentAnimations ->
-            currentAnimations.filterNot { it.commandId == commandId }
+            currentAnimations.filterNot { it.id == animation.id }
         }
 
-        if (pendingCommandsInCurrentBatch.isEmpty()) {
-            // All commands in the current batch are complete
+        // All commands in the current batch are complete
+        if (pendingAnimationsInCurrentBatch.isEmpty()) {
             val callback = currentBatchCompletionCallback
-            currentBatchCompletionCallback = null // Reset for the next batch
-            callback?.invoke()
+            currentBatchCompletionCallback = null
+            callback?.invoke(successfullyPlayedAnimations.toList())
+            successfullyPlayedAnimations.clear()
         }
     }
 
     override fun clearAllAnimations() {
         _activeAnimations.value = emptyList()
-        pendingCommandsInCurrentBatch.clear()
-        // Resetting pending completion callback as per interface description, without invoking it.
+        pendingAnimationsInCurrentBatch.clear()
+        successfullyPlayedAnimations.clear()
         currentBatchCompletionCallback = null
     }
 }

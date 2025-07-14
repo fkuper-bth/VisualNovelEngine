@@ -6,26 +6,30 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.unit.IntSize
-import model.Sprite
+import data.AssetStore
+import data.model.assets.Sprite
+import data.model.assets.resolveProps
+import org.koin.compose.koinInject
 
 @Composable
 internal fun VisualNovelSceneEnvironment(
     environment: Sprite.Environment,
-    containerSize: IntSize
+    containerSize: IntSize,
+    assetStore: AssetStore = koinInject()
 ) {
     Box(modifier = Modifier
         .fillMaxSize()
         .clipToBounds()
     ) {
         // Draw the environment sprite
-        VisualNovelSceneSprite(
+        AnimatableVisualNovelSprite(
             sprite = environment,
             containerSize = containerSize
         )
 
         // Draw props on top
-        environment.props.forEach { prop ->
-            VisualNovelSceneSprite(
+        environment.resolveProps(assetStore).forEach { prop ->
+            AnimatableVisualNovelSprite(
                 sprite = prop,
                 containerSize = containerSize
             )

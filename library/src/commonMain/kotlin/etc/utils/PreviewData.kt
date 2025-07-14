@@ -10,7 +10,7 @@ internal object PreviewData {
         ),
         StoryPassageNovelEvent.CharacterAction(
             characterName = "banker_secondary",
-            expression = "Smiling",
+            expression = "smiling",
             text = "Hello Player! I'm happy to be here, but I do not have much to say."
         ),
         StoryPassageNovelEvent.PlayerText(
@@ -18,19 +18,32 @@ internal object PreviewData {
         ),
         StoryPassageNovelEvent.CharacterAction(
             characterName = "banker_main",
-            expression = "Smiling",
+            expression = "smiling",
             text = "I'm the main banker, so you should pay some respect to me."
         ),
+        StoryPassageNovelEvent.PlayerText(
+            value = "Alright good to know."
+        ),
+        StoryPassageNovelEvent.CharacterAction(
+            characterName = "banker_secondary",
+            expression = "angry",
+            text = "Yea kid. Don't get it twisted."
+        ),
+        StoryPassageNovelEvent.CharacterAction(
+            characterName = "banker_main",
+            expression = "angry",
+            text = "Do you get it?"
+        ),
         StoryPassageNovelEvent.Link(
-            linkText = "Uhh... okay?",
+            linkText = "No... not really?",
             targetPassageName = "NextPassage"
         ),
         StoryPassageNovelEvent.Link(
-            linkText = "Okay, but I won't.",
+            linkText = "I think I do.",
             targetPassageName = "NextPassage"
         ),
         StoryPassageNovelEvent.Link(
-            linkText = "Fine.",
+            linkText = "Time will tell.",
             targetPassageName = "NextPassage"
         ),
     )

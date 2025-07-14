@@ -1,4 +1,4 @@
-package sound
+package api
 
 interface SoundEngine {
     fun playSoundEffect(name: String)

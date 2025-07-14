@@ -2,15 +2,14 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
-import animation.AnimationCommand
-import animation.AnimationCommandIdentifier
 import animation.NovelAnimationServiceImpl
+import data.model.assets.Animation
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
-import kotlin.uuid.Uuid
 
 class NovelAnimationServiceImplTest {
     private val underTest = NovelAnimationServiceImpl()
@@ -35,9 +34,10 @@ class NovelAnimationServiceImplTest {
         var onAllAnimationsCompleteCalled = false
 
         // Act
-        underTest.playAnimationBatch(onAllAnimationsComplete = {
-            onAllAnimationsCompleteCalled = true
-        })
+        underTest.playAnimationBatch(
+            animations = listOf(),
+            onAllAnimationsComplete = { onAllAnimationsCompleteCalled = true }
+        )
         val activeAnimations = underTest.activeAnimations.value
 
         // Assert
@@ -51,16 +51,16 @@ class NovelAnimationServiceImplTest {
         // registers onAllAnimationsComplete.
 
         // Arrange
-        val commands = listOf(
-            AnimationCommand.AnimateText(Uuid.random(), "First Text To Animate"),
-            AnimationCommand.AnimateText(Uuid.random(), "Second Text To Animate")
-        ).toTypedArray()
+        val animations = listOf(
+            Animation.Text("First", "Text"),
+            Animation.Text("Second", "Text")
+        )
         var onAllAnimationsCompleteCalled = false
 
         // Act & Assert
 
         // Before notifying about animation completion, they should be active
-        underTest.playAnimationBatch(*commands, onAllAnimationsComplete = {
+        underTest.playAnimationBatch(animations, onAllAnimationsComplete = {
             onAllAnimationsCompleteCalled = true
         })
         var activeAnimations = underTest.activeAnimations.value
@@ -69,7 +69,7 @@ class NovelAnimationServiceImplTest {
         assertFalse(onAllAnimationsCompleteCalled)
 
         // After notifying service about the animations completing, they should be inactive
-        commands.forEach { underTest.notifyAnimationComplete(it.commandId) }
+        animations.forEach { underTest.notifyAnimationComplete(it) }
         activeAnimations = underTest.activeAnimations.value
         assertTrue(activeAnimations.isEmpty())
         assertTrue(onAllAnimationsCompleteCalled)
@@ -82,30 +82,30 @@ class NovelAnimationServiceImplTest {
 
         // Arrange
         val firstBatch = listOf(
-            AnimationCommand.AnimateText(Uuid.random(), "First Text To Animate"),
-            AnimationCommand.AnimateText(Uuid.random(), "Second Text To Animate")
-        ).toTypedArray()
+            Animation.Text("First", "Text"),
+            Animation.Text("Second", "Text")
+        )
         val secondBatch = listOf(
-            AnimationCommand.AnimateText(Uuid.random(), "Third Text To Animate"),
-            AnimationCommand.AnimateText(Uuid.random(), "Fourth Text To Animate")
-        ).toTypedArray()
+            Animation.Text("Third", "Text"),
+            Animation.Text("Fourth", "Text")
+        )
         var onFirstBatchCompletedCalled = false
         var onSecondBatchCompletedCalled = false
 
         // Act & Assert
 
         // Queue first batch, check that it's active
-        underTest.playAnimationBatch(*firstBatch, onAllAnimationsComplete = {
+        underTest.playAnimationBatch(firstBatch, onAllAnimationsComplete = {
           onFirstBatchCompletedCalled = true
         })
-        assertEquals(firstBatch.toList(), underTest.activeAnimations.value)
+        assertEquals(firstBatch, underTest.activeAnimations.value)
 
         // Queue second batch before completing the first one
-        underTest.playAnimationBatch(*secondBatch, onAllAnimationsComplete = {
+        underTest.playAnimationBatch(secondBatch, onAllAnimationsComplete = {
             onSecondBatchCompletedCalled = true
         })
-        assertEquals(secondBatch.toList(), underTest.activeAnimations.value)
-        secondBatch.forEach { underTest.notifyAnimationComplete(it.commandId) }
+        assertEquals(secondBatch, underTest.activeAnimations.value)
+        secondBatch.forEach { underTest.notifyAnimationComplete(it) }
         assertTrue(onSecondBatchCompletedCalled)
         assertFalse(onFirstBatchCompletedCalled)
         assertTrue(underTest.activeAnimations.value.isEmpty())
@@ -116,16 +116,15 @@ class NovelAnimationServiceImplTest {
         // Verify how the system handles a batch with commands that have the same commandId.
 
         // Arrange
-        val duplicateId = Uuid.random()
-        val commands = listOf(
-            AnimationCommand.AnimateText(duplicateId, "First Text To Animate"),
-            AnimationCommand.AnimateText(duplicateId, "Second Text To Animate"),
-            AnimationCommand.AnimateText(Uuid.random(), "Third Text To Animate")
-        ).toTypedArray()
+        val animations = listOf(
+            Animation.Text("First", "Text"),
+            Animation.Text("First", "Text"),
+            Animation.Text("Second", "Text")
+        )
 
         // Act & Assert
         assertFailsWith<IllegalArgumentException> {
-            underTest.playAnimationBatch(*commands, onAllAnimationsComplete = {})
+            underTest.playAnimationBatch(animations, onAllAnimationsComplete = {})
         }
     }
 
@@ -134,23 +133,23 @@ class NovelAnimationServiceImplTest {
         // Verify that notifying completion of a command removes it from activeAnimations.
 
         // Arrange
-        val commands = listOf(
-            AnimationCommand.AnimateText(Uuid.random(), "First Text To Animate"),
-            AnimationCommand.AnimateText(Uuid.random(), "Second Text To Animate")
-        ).toTypedArray()
+        val animations = listOf(
+            Animation.Text("First", "Text"),
+            Animation.Text("Second", "Text")
+        )
         var onAllAnimationsCompleteCalled = false
 
         // Act & Assert
 
         // Before notifying about animation completion, they should all be active
-        underTest.playAnimationBatch(*commands, onAllAnimationsComplete = {
+        underTest.playAnimationBatch(animations, onAllAnimationsComplete = {
             onAllAnimationsCompleteCalled = true
         })
-        assertEquals(commands.toList(), underTest.activeAnimations.value)
+        assertEquals(animations.toList(), underTest.activeAnimations.value)
 
         // Notify completion of the first command
-        underTest.notifyAnimationComplete(commands.first().commandId)
-        assertEquals(listOf(commands.last()), underTest.activeAnimations.value)
+        underTest.notifyAnimationComplete(animations.first())
+        assertEquals(listOf(animations.last()), underTest.activeAnimations.value)
         assertFalse(onAllAnimationsCompleteCalled)
     }
 
@@ -160,10 +159,10 @@ class NovelAnimationServiceImplTest {
         // not invoke the completion callback and handles gracefully.
 
         // Arrange
-        val command = AnimationCommand.AnimateText(Uuid.random(), "First Text To Animate")
-        val invalidCommandId = AnimationCommandIdentifier.Text(Uuid.random())
+        val animations = listOf(Animation.Text("First", "Text"))
+        val nonBatchAnimation = Animation.Text("Second", "Text")
         var onAllAnimationsCompleteCalled = false
-        underTest.playAnimationBatch(command, onAllAnimationsComplete = {
+        underTest.playAnimationBatch(animations, onAllAnimationsComplete = {
             onAllAnimationsCompleteCalled = true
         })
 
@@ -171,11 +170,11 @@ class NovelAnimationServiceImplTest {
 
         // notifyAnimationComplete should fail with an exception
         assertFailsWith<IllegalArgumentException> {
-            underTest.notifyAnimationComplete(invalidCommandId)
+            underTest.notifyAnimationComplete(nonBatchAnimation)
         }
 
         // activeAnimations state should remain unchanged
-        assertEquals(command, underTest.activeAnimations.value.first())
+        assertEquals(animations.first(), underTest.activeAnimations.value.first())
         assertFalse(onAllAnimationsCompleteCalled)
     }
 
@@ -185,23 +184,23 @@ class NovelAnimationServiceImplTest {
         // correctly (e.g., doesn't invoke callback multiple times).
 
         // Arrange
-        val command = AnimationCommand.AnimateText(Uuid.random(), "First Text To Animate")
+        val animation = Animation.Text("First", "Text")
         var onAllAnimationsCompleteCalled = false
-        underTest.playAnimationBatch(command, onAllAnimationsComplete = {
+        underTest.playAnimationBatch(listOf(animation), onAllAnimationsComplete = {
             onAllAnimationsCompleteCalled = true
         })
 
         // Act & Assert
 
         // Notify completion of the first command, should complete the batch
-        underTest.notifyAnimationComplete(command.commandId)
+        underTest.notifyAnimationComplete(animation)
         assertTrue(onAllAnimationsCompleteCalled)
 
         // Notify with the same commandId again, should fail with an exception
         // and callback should not be invoked again
         onAllAnimationsCompleteCalled = false
         assertFailsWith<IllegalArgumentException> {
-            underTest.notifyAnimationComplete(command.commandId)
+            underTest.notifyAnimationComplete(animation)
         }
         assertFalse(onAllAnimationsCompleteCalled)
     }
@@ -212,12 +211,12 @@ class NovelAnimationServiceImplTest {
         // (no active batch) handles gracefully.
 
         // Arrange
-        val commandId = AnimationCommandIdentifier.Text(Uuid.random())
+        val animation = Animation.Text("First", "Text")
         assertTrue(underTest.activeAnimations.value.isEmpty())
 
         // Act & Assert
         assertFailsWith<IllegalArgumentException> {
-            underTest.notifyAnimationComplete(commandId)
+            underTest.notifyAnimationComplete(animation)
         }
     }
 
@@ -228,13 +227,13 @@ class NovelAnimationServiceImplTest {
         // notification.
 
         // Arrange
-        val commands = listOf(
-            AnimationCommand.AnimateText(Uuid.random(), "First Text To Animate"),
-            AnimationCommand.AnimateText(Uuid.random(), "Second Text To Animate"),
-            AnimationCommand.AnimateText(Uuid.random(), "Third Text To Animate")
-        ).toTypedArray()
+        val animations = listOf(
+            Animation.Text("First", "Text"),
+            Animation.Text("Second", "Text"),
+            Animation.Text("Third", "Text")
+        )
         var onAllAnimationsCompleteCalled = false
-        underTest.playAnimationBatch(*commands, onAllAnimationsComplete = {
+        underTest.playAnimationBatch(animations, onAllAnimationsComplete = {
             onAllAnimationsCompleteCalled = true
         })
 
@@ -242,12 +241,12 @@ class NovelAnimationServiceImplTest {
 
         // Before notifying about animation completion, they should all be active
         assertFalse(onAllAnimationsCompleteCalled)
-        assertEquals(commands.toList(), underTest.activeAnimations.value)
+        assertEquals(animations.toList(), underTest.activeAnimations.value)
 
         // After each notify call, the active animations list should reflect the remaining commands
-        commands.forEachIndexed { index, command ->
-            underTest.notifyAnimationComplete(command.commandId)
-            val remainingActiveAnimation = commands.toList().subList(index + 1, commands.size)
+        animations.forEachIndexed { index, animation ->
+            underTest.notifyAnimationComplete(animation)
+            val remainingActiveAnimation = animations.subList(index + 1, animations.size)
             assertEquals(remainingActiveAnimation, underTest.activeAnimations.value)
         }
 
@@ -261,20 +260,20 @@ class NovelAnimationServiceImplTest {
         // and currentBatchCompletionCallback without invoking the callback.
 
         // Arrange
-        val commands = listOf(
-            AnimationCommand.AnimateText(Uuid.random(), "First Text To Animate"),
-            AnimationCommand.AnimateText(Uuid.random(), "Second Text To Animate"),
-            AnimationCommand.AnimateText(Uuid.random(), "Third Text To Animate")
-        ).toTypedArray()
+        val animations = listOf(
+            Animation.Text("First", "Text"),
+            Animation.Text("Second", "Text"),
+            Animation.Text("Third", "Text")
+        )
         var onAllAnimationsCompleteCalled = false
-        underTest.playAnimationBatch(*commands, onAllAnimationsComplete = {
+        underTest.playAnimationBatch(animations, onAllAnimationsComplete = {
             onAllAnimationsCompleteCalled = true
         })
 
         // Act & Assert
 
         // Before clearing all animations, they should all be active
-        assertEquals(commands.toList(), underTest.activeAnimations.value)
+        assertEquals(animations, underTest.activeAnimations.value)
 
         // Clear animations
         underTest.clearAllAnimations()
@@ -303,18 +302,18 @@ class NovelAnimationServiceImplTest {
         // invoked and state is reset.
 
         // Arrange
-        val commands = listOf(
-            AnimationCommand.AnimateText(Uuid.random(), "First Text To Animate"),
-            AnimationCommand.AnimateText(Uuid.random(), "Second Text To Animate"),
-            AnimationCommand.AnimateText(Uuid.random(), "Third Text To Animate")
-        ).toTypedArray()
+        val animations = listOf(
+            Animation.Text("First", "Text"),
+            Animation.Text("Second", "Text"),
+            Animation.Text("Third", "Text")
+        )
         var onAllAnimationsCompleteCalled = false
-        underTest.playAnimationBatch(*commands, onAllAnimationsComplete = {
+        underTest.playAnimationBatch(animations, onAllAnimationsComplete = {
             onAllAnimationsCompleteCalled = true
         })
 
         // Act & Assert
-        underTest.notifyAnimationComplete(commands.first().commandId)
+        underTest.notifyAnimationComplete(animations.first())
         assertEquals(2, underTest.activeAnimations.value.size)
 
         underTest.clearAllAnimations()
@@ -329,31 +328,31 @@ class NovelAnimationServiceImplTest {
 
         // Arrange
         val firstBatch = listOf(
-            AnimationCommand.AnimateText(Uuid.random(), "First Text To Animate"),
-            AnimationCommand.AnimateText(Uuid.random(), "Second Text To Animate"),
-            AnimationCommand.AnimateText(Uuid.random(), "Third Text To Animate")
-        ).toTypedArray()
+            Animation.Text("First", "Text"),
+            Animation.Text("Second", "Text"),
+            Animation.Text("Third", "Text")
+        )
         val secondBatch = listOf(
-            AnimationCommand.AnimateText(Uuid.random(), "Fourth Text To Animate"),
-            AnimationCommand.AnimateText(Uuid.random(), "Fifth Text To Animate")
-        ).toTypedArray()
+            Animation.Text("Fourth", "Text"),
+            Animation.Text("Fifth", "Text")
+        )
         var onAllAnimationsCompleteCalled = false
-        underTest.playAnimationBatch(*firstBatch, onAllAnimationsComplete = {
+        underTest.playAnimationBatch(firstBatch, onAllAnimationsComplete = {
             onAllAnimationsCompleteCalled = true
         })
 
         // Act & Assert
-        underTest.notifyAnimationComplete(firstBatch.first().commandId)
+        underTest.notifyAnimationComplete(firstBatch.first())
         assertEquals(2, underTest.activeAnimations.value.size)
         assertFalse(onAllAnimationsCompleteCalled)
 
-        underTest.playAnimationBatch(*secondBatch, onAllAnimationsComplete = {
+        underTest.playAnimationBatch(secondBatch, onAllAnimationsComplete = {
             onAllAnimationsCompleteCalled = true
         })
-        assertEquals(secondBatch.toList(), underTest.activeAnimations.value)
+        assertEquals(secondBatch, underTest.activeAnimations.value)
         assertFalse(onAllAnimationsCompleteCalled)
 
-        secondBatch.forEach { underTest.notifyAnimationComplete(it.commandId) }
+        secondBatch.forEach { underTest.notifyAnimationComplete(it) }
         assertTrue(onAllAnimationsCompleteCalled)
     }
 
@@ -363,31 +362,31 @@ class NovelAnimationServiceImplTest {
         // the new batch and the cleared batch's callback is not invoked.
 
         val firstBatch = listOf(
-            AnimationCommand.AnimateText(Uuid.random(), "First Text To Animate"),
-            AnimationCommand.AnimateText(Uuid.random(), "Second Text To Animate"),
-            AnimationCommand.AnimateText(Uuid.random(), "Third Text To Animate")
-        ).toTypedArray()
+            Animation.Text("First", "Text"),
+            Animation.Text("Second", "Text"),
+            Animation.Text("Third", "Text")
+        )
         val secondBatch = listOf(
-            AnimationCommand.AnimateText(Uuid.random(), "Fourth Text To Animate"),
-            AnimationCommand.AnimateText(Uuid.random(), "Fifth Text To Animate")
-        ).toTypedArray()
+            Animation.Text("Fourth", "Text"),
+            Animation.Text("Fifth", "Text")
+        )
         var onAllAnimationsCompleteCalled = false
 
         // Act & Assert
-        underTest.playAnimationBatch(*firstBatch, onAllAnimationsComplete = {
+        underTest.playAnimationBatch(firstBatch, onAllAnimationsComplete = {
             onAllAnimationsCompleteCalled = true
         })
-        assertEquals(firstBatch.toList(), underTest.activeAnimations.value)
+        assertEquals(firstBatch, underTest.activeAnimations.value)
         assertFalse(onAllAnimationsCompleteCalled)
 
         underTest.clearAllAnimations()
         assertTrue(underTest.activeAnimations.value.isEmpty())
         assertFalse(onAllAnimationsCompleteCalled)
 
-        underTest.playAnimationBatch(*secondBatch, onAllAnimationsComplete = {
+        underTest.playAnimationBatch(secondBatch, onAllAnimationsComplete = {
             onAllAnimationsCompleteCalled = true
         })
-        assertEquals(secondBatch.toList(), underTest.activeAnimations.value)
+        assertEquals(secondBatch, underTest.activeAnimations.value)
         assertFalse(onAllAnimationsCompleteCalled)
     }
 
@@ -399,7 +398,7 @@ class NovelAnimationServiceImplTest {
 
         // Arrange
         // set up collecting state flow updates
-        val collectedUpdates = mutableListOf<List<AnimationCommand>>()
+        val collectedUpdates = mutableListOf<List<Animation>>()
         val collectJob = launch {
             underTest.activeAnimations.collect(collectedUpdates::add)
         }
@@ -408,17 +407,17 @@ class NovelAnimationServiceImplTest {
         assertTrue(collectedUpdates.first().isEmpty())
 
         // set up command batch
-        val commands = listOf(
-            AnimationCommand.AnimateText(Uuid.random(), "First Text To Animate"),
-            AnimationCommand.AnimateText(Uuid.random(), "Second Text To Animate"),
-            AnimationCommand.AnimateText(Uuid.random(), "Third Text To Animate")
-        ).toTypedArray()
+        val animations = listOf(
+            Animation.Text("First", "Text"),
+            Animation.Text("Second", "Text"),
+            Animation.Text("Third", "Text")
+        )
 
         // Act & Assert
-        underTest.playAnimationBatch(*commands, onAllAnimationsComplete = {})
+        underTest.playAnimationBatch(animations, onAllAnimationsComplete = {})
         advanceUntilIdle()
         assertEquals(2, collectedUpdates.size)
-        assertEquals(commands.toList(), collectedUpdates.last())
+        assertEquals(animations, collectedUpdates.last())
 
         // Clean up: cancel collection job
         collectJob.cancel()
@@ -432,7 +431,7 @@ class NovelAnimationServiceImplTest {
 
         // Arrange
         // set up collecting state flow updates
-        val collectedUpdates = mutableListOf<List<AnimationCommand>>()
+        val collectedUpdates = mutableListOf<List<Animation>>()
         val collectJob = launch {
             underTest.activeAnimations.collect(collectedUpdates::add)
         }
@@ -441,27 +440,27 @@ class NovelAnimationServiceImplTest {
         assertTrue(collectedUpdates.last().isEmpty())
 
         // set up command batch
-        val commands = listOf(
-            AnimationCommand.AnimateText(Uuid.random(), "First Text To Animate"),
-            AnimationCommand.AnimateText(Uuid.random(), "Second Text To Animate"),
-            AnimationCommand.AnimateText(Uuid.random(), "Third Text To Animate")
-        ).toTypedArray()
+        val animations = listOf(
+            Animation.Text("First", "Text"),
+            Animation.Text("Second", "Text"),
+            Animation.Text("Third", "Text")
+        )
         var onAllAnimationsCompleteCalled = false
 
         // Act & Assert
         // After initial play, the activeAnimations should be updated
-        underTest.playAnimationBatch(*commands, onAllAnimationsComplete = {
+        underTest.playAnimationBatch(animations, onAllAnimationsComplete = {
             onAllAnimationsCompleteCalled = true
         })
         advanceUntilIdle()
         assertEquals(2, collectedUpdates.size)
-        assertEquals(commands.toList(), collectedUpdates.last())
+        assertEquals(animations.toList(), collectedUpdates.last())
 
         // After each notify call, we should get a list of remaining commands
-        commands.forEachIndexed { index, command ->
-            underTest.notifyAnimationComplete(command.commandId)
+        animations.forEachIndexed { index, animation ->
+            underTest.notifyAnimationComplete(animation)
             advanceUntilIdle()
-            val remainingCommands = commands.toList().subList(index + 1, commands.size)
+            val remainingCommands = animations.subList(index + 1, animations.size)
             assertEquals(remainingCommands, collectedUpdates.last())
         }
 
@@ -480,7 +479,7 @@ class NovelAnimationServiceImplTest {
 
         // Arrange
         // set up collecting state flow updates
-        val collectedUpdates = mutableListOf<List<AnimationCommand>>()
+        val collectedUpdates = mutableListOf<List<Animation>>()
         val collectJob = launch {
             underTest.activeAnimations.collect(collectedUpdates::add)
         }
@@ -489,17 +488,17 @@ class NovelAnimationServiceImplTest {
         assertTrue(collectedUpdates.last().isEmpty())
 
         // set up command batch
-        val commands = listOf(
-            AnimationCommand.AnimateText(Uuid.random(), "First Text To Animate"),
-            AnimationCommand.AnimateText(Uuid.random(), "Second Text To Animate"),
-            AnimationCommand.AnimateText(Uuid.random(), "Third Text To Animate")
-        ).toTypedArray()
+        val animations = listOf(
+            Animation.Text("First", "Text"),
+            Animation.Text("Second", "Text"),
+            Animation.Text("Third", "Text")
+        )
 
         // after initial play, the activeAnimations should be updated
-        underTest.playAnimationBatch(*commands, onAllAnimationsComplete = {})
+        underTest.playAnimationBatch(animations, onAllAnimationsComplete = {})
         advanceUntilIdle()
         assertEquals(2, collectedUpdates.size)
-        assertEquals(commands.toList(), collectedUpdates.last())
+        assertEquals(animations, collectedUpdates.last())
 
         // Act
         underTest.clearAllAnimations()
@@ -518,16 +517,19 @@ class NovelAnimationServiceImplTest {
         // exception. Ensure the service itself doesn't crash and internal state is managed.
 
         // Arrange
-        val command = AnimationCommand.AnimateText(Uuid.random(), "First Text To Animate")
+        val animation = Animation.Text("First", "Text")
         val faultyCallbackException = IllegalStateException("Test exception from onAllAnimationsComplete")
         var onAllAnimationsCompleteCalled = false
         val onAllAnimationsComplete = {
             onAllAnimationsCompleteCalled = true
             throw faultyCallbackException
         }
-        underTest.playAnimationBatch(command, onAllAnimationsComplete = onAllAnimationsComplete)
+        underTest.playAnimationBatch(
+            animations = listOf(animation),
+            onAllAnimationsComplete = { onAllAnimationsComplete() }
+        )
         assertEquals(
-            command,
+            animation,
             underTest.activeAnimations.value.first(),
             "Animations should be active before completion."
         )
@@ -535,7 +537,7 @@ class NovelAnimationServiceImplTest {
         // Act
         // complete batch and verify exception is propagated
         val thrownException = assertFailsWith<IllegalStateException> {
-            underTest.notifyAnimationComplete(command.commandId)
+            underTest.notifyAnimationComplete(animation)
         }
         assertEquals(
             faultyCallbackException,
@@ -552,14 +554,14 @@ class NovelAnimationServiceImplTest {
         )
 
         // test playing a new batch to ensure the service is still functional
-        val nextBatchCommand = AnimationCommand.AnimateText(Uuid.random(), "Next batch after faulty callback")
+        val nextAnimation = Animation.Text("Second", "Text")
         var nextCallbackInvoked = false
-        underTest.playAnimationBatch(nextBatchCommand, onAllAnimationsComplete = {
+        underTest.playAnimationBatch(listOf(nextAnimation), onAllAnimationsComplete = {
             nextCallbackInvoked = true
         })
 
         assertEquals(
-            nextBatchCommand,
+            nextAnimation,
             underTest.activeAnimations.value.first(),
             "Service should accept a new batch."
         )
@@ -569,7 +571,7 @@ class NovelAnimationServiceImplTest {
         )
 
         // complete the new batch
-        underTest.notifyAnimationComplete(nextBatchCommand.commandId)
+        underTest.notifyAnimationComplete(nextAnimation)
         assertTrue(
             nextCallbackInvoked,
             "New batch callback should be invokable."
@@ -577,6 +579,88 @@ class NovelAnimationServiceImplTest {
         assertTrue(
             underTest.activeAnimations.value.isEmpty(),
             "Active animations should be empty after the new batch completes."
+        )
+    }
+
+    @Test
+    fun `playAnimationBatch - onAllAnimationsComplete should contain successful animations`() {
+        // Arrange
+        val animations = listOf(
+            Animation.Text("First", "Text"),
+            Animation.Text("Second", "Text"),
+            Animation.Text("Third", "Text")
+        )
+        var succeededAnimations = listOf<Animation>()
+        val onAllAnimationsComplete = { playedAnimations: List<Animation> ->
+            succeededAnimations = playedAnimations
+        }
+
+        // Act
+        underTest.playAnimationBatch(animations, onAllAnimationsComplete)
+        animations.forEach(underTest::notifyAnimationComplete)
+
+        // Assert
+        assertEquals(
+            animations,
+            succeededAnimations,
+            "onAllAnimationsComplete should contain all successfully played animations."
+        )
+    }
+
+    @Test
+    fun `playAnimationBatch - onAllAnimationsComplete with empty batch should return empty list`() {
+        // Arrange
+        var succeededAnimations: List<Animation>? = null
+        val onAllAnimationsComplete = { playedAnimations: List<Animation> ->
+            succeededAnimations = playedAnimations
+        }
+
+        // Act
+        underTest.playAnimationBatch(listOf(), onAllAnimationsComplete)
+
+        // Assert
+        assertNotNull(
+            succeededAnimations,
+            "succeededAnimations should not be null."
+        )
+        assertTrue(
+            succeededAnimations.isEmpty(),
+            "onAllAnimationsComplete should return an empty list for an empty batch."
+        )
+    }
+
+    @Test
+    fun `playAnimationBatch - onAllAnimationsComplete should not contain failed animations`() {
+        // Arrange
+        val successfulAnimations = listOf(
+            Animation.Text("First", "Text"),
+            Animation.Text("Second", "Text"),
+            Animation.Text("Third", "Text")
+        )
+        val failedAnimation = Animation.Text("Fourth", "Text")
+        var callbackResult = listOf<Animation>()
+        val onAllAnimationsComplete = { playedAnimations: List<Animation> ->
+            callbackResult = playedAnimations
+        }
+
+        // Act & Assert
+        underTest.playAnimationBatch(successfulAnimations, onAllAnimationsComplete)
+        assertFailsWith<IllegalArgumentException>(
+            message = "Playing with an animation not in current batch should throw an exception."
+        ) {
+            underTest.notifyAnimationComplete(failedAnimation)
+        }
+        successfulAnimations.forEach(underTest::notifyAnimationComplete)
+
+        // Assert
+        assertFalse(
+            callbackResult.contains(failedAnimation),
+            "onAllAnimationsComplete should not contain failed animations."
+        )
+        assertEquals(
+            successfulAnimations,
+            callbackResult,
+            "onAllAnimationsComplete should contain all successfully played animations."
         )
     }
 }

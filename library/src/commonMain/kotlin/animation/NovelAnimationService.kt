@@ -1,95 +1,42 @@
 package animation
 
-import androidx.compose.ui.Alignment
 import kotlinx.coroutines.flow.StateFlow
-import kotlin.uuid.Uuid
-
-sealed class AnimationCommandIdentifier(
-    val idPrefix: String,
-    open val id: Uuid
-) {
-    data class Text(
-        override val id: Uuid
-    ) : AnimationCommandIdentifier("AnimateText", id)
-
-    data class SpriteAlpha(
-        override val id: Uuid
-    ) : AnimationCommandIdentifier("AnimateSpriteAlpha", id)
-
-    data class SpriteCharacterPosition(
-        override val id: Uuid
-    ) : AnimationCommandIdentifier("AnimateSpriteCharacterPosition", id)
-
-    override fun toString(): String {
-        return "${idPrefix}_${id}"
-    }
-}
-
-/**
- * Represents a single animation unit that the service will manage.
- */
-sealed interface AnimationCommand {
-    val commandId: AnimationCommandIdentifier
-
-    data class AnimateText(
-        val id: Uuid,
-        val text: String,
-        val animationDelayMillis: Long = 25L,
-    ) : AnimationCommand {
-        override val commandId = AnimationCommandIdentifier.Text(id)
-    }
-
-    data class AnimateSpriteAlpha(
-        val id: Uuid,
-        val spriteName: String,
-        val fromAlpha: Float,
-        val toAlpha: Float,
-        val durationMillis: Long
-    ) : AnimationCommand {
-        override val commandId = AnimationCommandIdentifier.SpriteAlpha(id)
-    }
-
-    data class AnimateSpriteCharacterPosition(
-        val id: Uuid,
-        val spriteName: String,
-        val fromAlignment: Alignment,
-        val toAlignment: Alignment,
-        val durationMillis: Long
-    ) : AnimationCommand {
-        override val commandId = AnimationCommandIdentifier.SpriteCharacterPosition(id)
-    }
-}
+import data.model.assets.Animation
 
 interface NovelAnimationService {
     /**
-     * A flow emitting the current list of active animation commands.
+     * A flow emitting the current list of active animations.
      * UI components can observe this flow to render the animations.
      * The list represents animations that are currently expected to be playing or queued.
      */
-    val activeAnimations: StateFlow<List<AnimationCommand>>
+    val activeAnimations: StateFlow<List<Animation>>
 
     /**
-     * Submits a list of animation commands to be played.
-     * These commands will be made available via the [activeAnimations] flow.
+     * Submits a list of animations to be played.
+     * These animations will be made available via the [activeAnimations] flow.
      * The [onAllAnimationsComplete] callback will be invoked once all
-     * commands in this specific batch have been reported as completed
-     * via [notifyAnimationComplete].
+     * animations in this batch have been reported as completed via [notifyAnimationComplete].
      *
-     * @param commands The list of animation commands to play. These should have unique IDs.
-     * @param onAllAnimationsComplete A callback to be invoked when all submitted commands are complete.
-     * @throws IllegalArgumentException If the list of commands contains duplicate IDs.
+     * @param animations Animations to play. These should have unique IDs.
+     * @param onAllAnimationsComplete A callback to be invoked when all submitted commands are
+     * complete. Includes a list of completed animations which can be used to perform any necessary
+     * state updates.
+     * @throws IllegalArgumentException If the provided batch contains duplicate IDs.
      */
-    fun playAnimationBatch(vararg commands: AnimationCommand, onAllAnimationsComplete: () -> Unit)
+    fun playAnimationBatch(
+        animations: List<Animation>,
+        onAllAnimationsComplete: (playedAnimations: List<Animation>) -> Unit
+    )
 
     /**
-     * Notifies the service that a specific animation command has completed.
+     * Notifies the service that a specific animation has completed.
      * UI components rendering animations (e.g., an AnimatedText Composable)
      * should call this method upon completion of their animation.
      *
-     * @param commandId The ID of the completed animation command.
-     * @throws IllegalArgumentException If the provided command ID is not found in the current batch.
+     * @param animation The completed animation.
+     * @throws IllegalArgumentException If the provided animation is not found in the current batch.
      */
-    fun notifyAnimationComplete(commandId: AnimationCommandIdentifier)
+    fun notifyAnimationComplete(animation: Animation)
 
     /**
      * Clears all current animations and resets any pending completion callbacks for batches.

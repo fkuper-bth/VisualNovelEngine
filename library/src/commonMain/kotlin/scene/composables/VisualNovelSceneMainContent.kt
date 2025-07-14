@@ -19,7 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import etc.utils.fadingEdge
-import model.SceneRenderState
+import data.model.scene.SceneRenderState
 
 @Composable
 internal fun VisualNovelSceneMainContent(
@@ -48,6 +48,9 @@ internal fun VisualNovelSceneMainContent(
             Spacer(Modifier.weight(1f))
         }
 
+        // FIXME: when a SpriteTransition animation is done, we replace the sprite in the data layer,
+        // if the animated sprite was the active character, this animation triggers again...
+        // how to fix?
         Crossfade(
             targetState = scene.activeCharacter,
             animationSpec = tween(500),
@@ -56,7 +59,7 @@ internal fun VisualNovelSceneMainContent(
             if (activeCharacter != null) {
                 BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
                     val size = IntSize(constraints.maxWidth, constraints.maxHeight)
-                    VisualNovelSceneSprite(
+                    AnimatableVisualNovelSprite(
                         sprite = activeCharacter,
                         containerSize = size,
                         alignment = activeCharacter.alignment
