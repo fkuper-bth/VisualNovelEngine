@@ -1,4 +1,4 @@
-package etc.utils
+package etc.utils.preview
 
 import data.model.StoryPassageNovelEvent
 import fk.story.engine.main.utils.StoryPassagePlayResult

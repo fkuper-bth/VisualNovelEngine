@@ -1,18 +1,28 @@
 package etc.di
 
-import service.NovelAnimationService
-import service.NovelAnimationServiceImpl
+import api.engine.Configuration
 import api.engine.VisualNovelEngine
 import api.engine.VisualNovelEngineImpl
+import kotlinx.coroutines.CoroutineScope
+import org.koin.dsl.module
 import service.AssetStore
 import service.AssetStoreImpl
+import service.NovelAnimationService
+import service.NovelAnimationServiceImpl
 import service.SceneRenderController
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import org.koin.dsl.module
 
-internal val sharedModule = module {
+/**
+ * Creates a Koin module for the visual novel engine.
+ * @param coroutineScope The coroutine scope to use for the visual novel engine.
+ * @param config The configuration to use for the visual novel engine.
+ */
+internal fun createVisualNovelEngineModule(
+    coroutineScope: CoroutineScope,
+    config: Configuration = Configuration()
+) = module {
+    single<Configuration> {
+        config
+    }
     single<AssetStore> {
         AssetStoreImpl()
     }
@@ -23,7 +33,7 @@ internal val sharedModule = module {
     factory<SceneRenderController> {
         SceneRenderController(
             assetStore = get(),
-            coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+            coroutineScope = coroutineScope
         )
     }
     factory<VisualNovelEngine> {
