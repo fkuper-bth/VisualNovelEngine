@@ -45,11 +45,14 @@ sealed interface Text : Asset {
 
     /**
      * Represents a link text asset.
+     * @param link The link novel event associated with this asset.
      */
     class Link(
-        override val id: String,
-        override val value: String
-    ) : Text
+        val link: StoryPassageNovelEvent.Link
+    ) : Text {
+        override val id: String = link.identifier.toString()
+        override val value: String = link.linkText ?: ""
+    }
 }
 
 internal fun StoryPassageNovelEvent.toText(): Text? {
@@ -61,9 +64,7 @@ internal fun StoryPassageNovelEvent.toText(): Text? {
             Text.Info(identifier.toString(), value)
         }
         is StoryPassageNovelEvent.Link -> {
-            // TODO: how to handle links without text?
-            // should that link be selected automatically?
-            Text.Link(identifier.toString(), linkText ?: "No Link Text.")
+            Text.Link(this)
         }
         is StoryPassageNovelEvent.PlayerText -> {
             Text.Player(identifier.toString(), value)

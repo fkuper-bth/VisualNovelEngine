@@ -16,6 +16,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.IntSize
 import model.assets.Animation
 import api.engine.VisualNovelEngine
+import data.model.StoryPassageNovelEvent
 import etc.di.sharedModule
 import etc.utils.PreviewData
 import fk.visualnovel.engine.library.generated.resources.Res
@@ -38,12 +39,14 @@ import scene.composables.VisualNovelSceneMainContent
 /**
  * Composable for displaying a visual novel scene.
  * @param scene The scene to display.
+ * @param onLinkClick The callback to invoke when a link is clicked.
  * @param aspectRatio The aspect ratio of the scene.
  * @param modifier The modifier to apply to the scene.
  */
 @Composable
 fun VisualNovelScene(
     scene: SceneRenderState,
+    onLinkClick: (StoryPassageNovelEvent.Link) -> Unit,
     aspectRatio: Float = 9f / 16f,
     modifier: Modifier = Modifier
 ) {
@@ -60,7 +63,11 @@ fun VisualNovelScene(
             }
         }
 
-        VisualNovelSceneMainContent(scene = scene, modifier = Modifier.fillMaxSize())
+        VisualNovelSceneMainContent(
+            scene = scene,
+            onLinkClick = onLinkClick,
+            modifier = Modifier.fillMaxSize()
+        )
 
         scene.foreground?.let {
             BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
@@ -189,6 +196,6 @@ private fun ExampleScenePreview() {
             // 3. - handle story passage play
             visualNovelEngine.handleStoryPassagePlay(PreviewData.passageData)
         }
-        VisualNovelScene(scene)
+        VisualNovelScene(scene, onLinkClick = {})
     }
 }

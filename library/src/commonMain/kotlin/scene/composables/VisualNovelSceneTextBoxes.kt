@@ -10,6 +10,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import data.model.StoryPassageNovelEvent
 import service.NovelAnimationService
 import kotlinx.coroutines.delay
 import model.assets.Text
@@ -19,7 +20,7 @@ import kotlin.text.forEach
 @Composable
 internal fun VisualNovelSceneTextBoxes(
     textBoxes: List<Text>,
-    onLinkClick: () -> Unit = {},
+    onLinkClick: (StoryPassageNovelEvent.Link) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -56,7 +57,15 @@ internal fun VisualNovelSceneTextBoxes(
                 }
 
                 is Text.Link -> {
-                    LinkTextComposable(onClick = onLinkClick, text = it.value)
+                    if (it.value.isEmpty()) {
+                        // if the link has no text, automatically trigger the link click
+                        onLinkClick(it.link)
+                    } else {
+                        LinkTextComposable(
+                            onClick = { onLinkClick(it.link) },
+                            text = it.value
+                        )
+                    }
                 }
             }
         }

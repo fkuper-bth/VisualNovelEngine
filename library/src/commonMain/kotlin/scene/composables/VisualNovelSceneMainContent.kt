@@ -18,12 +18,14 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import data.model.StoryPassageNovelEvent
 import etc.utils.fadingEdge
 import model.scene.SceneRenderState
 
 @Composable
 internal fun VisualNovelSceneMainContent(
     scene: SceneRenderState,
+    onLinkClick: (StoryPassageNovelEvent.Link) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
@@ -32,6 +34,7 @@ internal fun VisualNovelSceneMainContent(
         if (scene.textBoxes.isNotEmpty()) {
             VisualNovelSceneTextBoxes(
                 textBoxes = scene.textBoxes,
+                onLinkClick = onLinkClick,
                 modifier = Modifier
                     .fadingEdge(textBoxColumnFadeBrush())
                     .fillMaxWidth()
