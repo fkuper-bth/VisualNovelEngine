@@ -1,28 +1,12 @@
-package data
+package service
 
-import data.model.assets.Asset
+import model.assets.Asset
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-interface AssetStore {
-    val assets: StateFlow<Map<String, Asset>>
-
-    fun addOrUpdateAsset(asset: Asset)
-
-    fun addOrUpdateAsset(assetId: String, asset: Asset)
-
-    fun addOrUpdateAssets(assets: List<Asset>) = assets.forEach(::addOrUpdateAsset)
-
-    fun removeAsset(assetId: String)
-}
-
-inline fun <reified T : Asset> AssetStore.getNow(id: String): T? {
-    return assets.value[id] as? T
-}
-
-class AssetStoreImpl : AssetStore {
+internal class AssetStoreImpl : AssetStore {
     private val _assets = MutableStateFlow<Map<String, Asset>>(emptyMap())
     override val assets: StateFlow<Map<String, Asset>> = _assets.asStateFlow()
 

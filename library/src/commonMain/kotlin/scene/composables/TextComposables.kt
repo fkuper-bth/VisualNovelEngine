@@ -14,7 +14,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
 @Composable
-internal fun InfoTextView(text: String) {
+internal fun InfoTextComposable(text: String) {
     val bubbleShape = RoundedCornerShape(16.dp)
     val borderColor = MaterialTheme.colorScheme.primaryContainer
     val textStyle = MaterialTheme.typography.bodyMedium.copy(
@@ -30,7 +30,7 @@ internal fun InfoTextView(text: String) {
 }
 
 @Composable
-internal fun PlayerTextView(text: String) {
+internal fun PlayerTextComposable(text: String) {
     val bubbleShape = RoundedCornerShape(16.dp, 2.dp, 16.dp, 16.dp)
     val borderColor = MaterialTheme.colorScheme.secondaryContainer
     val textStyle = MaterialTheme.typography.bodyMedium.copy(
@@ -46,7 +46,7 @@ internal fun PlayerTextView(text: String) {
 }
 
 @Composable
-internal fun CharacterTextView(text: String) {
+internal fun CharacterTextComposable(text: String) {
     val bubbleShape = RoundedCornerShape(2.dp, 16.dp, 16.dp, 16.dp)
     val borderColor = MaterialTheme.colorScheme.tertiaryContainer
     val textStyle = MaterialTheme.typography.bodyMedium.copy(
@@ -62,7 +62,7 @@ internal fun CharacterTextView(text: String) {
 }
 
 @Composable
-internal fun LinkView(onClick: () -> Unit, text: String) {
+internal fun LinkTextComposable(onClick: () -> Unit, text: String) {
     val bubbleShape = RoundedCornerShape(16.dp, 2.dp, 16.dp, 16.dp)
     val borderColor = MaterialTheme.colorScheme.surface
     val textStyle = MaterialTheme.typography.bodyMedium.copy(

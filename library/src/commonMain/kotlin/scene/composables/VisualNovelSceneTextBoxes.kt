@@ -10,15 +10,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import animation.NovelAnimationService
+import service.NovelAnimationService
 import kotlinx.coroutines.delay
-import data.model.assets.Text
+import model.assets.Text
 import org.koin.compose.koinInject
 import kotlin.text.forEach
 
 @Composable
 internal fun VisualNovelSceneTextBoxes(
     textBoxes: List<Text>,
+    onLinkClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -28,36 +29,34 @@ internal fun VisualNovelSceneTextBoxes(
         textBoxes.forEach {
             when (it) {
                 is Text.Info -> {
-                    AnimatableRenderText(
+                    AnimatableTextComposable(
                         textAsset = it,
                         textComposable = { displayedText ->
-                            InfoTextView(displayedText)
+                            InfoTextComposable(displayedText)
                         },
                     )
                 }
 
                 is Text.Player -> {
-                    AnimatableRenderText(
+                    AnimatableTextComposable(
                         textAsset = it,
                         textComposable = { displayedText ->
-                            PlayerTextView(displayedText)
+                            PlayerTextComposable(displayedText)
                         },
                     )
                 }
 
                 is Text.Character -> {
-                    AnimatableRenderText(
+                    AnimatableTextComposable(
                         textAsset = it,
                         textComposable = { displayedText ->
-                            CharacterTextView(displayedText)
+                            CharacterTextComposable(displayedText)
                         },
                     )
                 }
 
                 is Text.Link -> {
-                    LinkView(onClick = {
-                        // TODO: callback to handle playing next passage
-                    }, text = it.text)
+                    LinkTextComposable(onClick = onLinkClick, text = it.value)
                 }
             }
         }
@@ -65,7 +64,7 @@ internal fun VisualNovelSceneTextBoxes(
 }
 
 @Composable
-private fun AnimatableRenderText(
+private fun AnimatableTextComposable(
     textAsset: Text,
     animationService: NovelAnimationService = koinInject(),
     textComposable: @Composable (displayedText: String) -> Unit,
@@ -76,14 +75,14 @@ private fun AnimatableRenderText(
     }
 
     if (isCurrentlyAnimatingThisEvent) {
-        var displayedText by remember(textAsset.text, textAsset.animationProps.id) {
+        var displayedText by remember(textAsset.value, textAsset.animationProps.id) {
             mutableStateOf("")
         }
 
-        LaunchedEffect(textAsset.text, textAsset.animationProps.id) {
+        LaunchedEffect(textAsset.value, textAsset.animationProps.id) {
             displayedText = ""
-            if (textAsset.text.isNotEmpty()) {
-                textAsset.text.forEach { char ->
+            if (textAsset.value.isNotEmpty()) {
+                textAsset.value.forEach { char ->
                     displayedText += char
                     delay(textAsset.animationProps.durationMillis.toLong())
                 }
@@ -96,6 +95,6 @@ private fun AnimatableRenderText(
 
         textComposable(displayedText)
     } else {
-        textComposable(textAsset.text)
+        textComposable(textAsset.value)
     }
 }

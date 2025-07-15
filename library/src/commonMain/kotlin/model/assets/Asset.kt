@@ -1,4 +1,4 @@
-package data.model.assets
+package model.assets
 
 /**
  * A base interface for all assets.

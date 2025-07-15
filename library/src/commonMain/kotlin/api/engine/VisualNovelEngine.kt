@@ -1,24 +1,34 @@
-package api
+package api.engine
 
-import data.model.assets.Asset
+import model.assets.Asset
 import fk.story.engine.main.utils.StoryPassagePlayResult
 import kotlinx.coroutines.flow.StateFlow
-import data.model.scene.SceneRenderState
-import data.model.scene.SceneRenderStateIds
+import model.scene.SceneRenderState
+import model.scene.SceneRenderStateIds
 
+/**
+ * The visual novel engine interface providing access to all the functionality required to display
+ * and interact with a visual novel.
+ */
 interface VisualNovelEngine {
     /**
      * Loads a list of assets into the engine.
+     * These can then be accessed and used in a visual novel scene.
+     * @param assets The list of assets to load.
      */
     fun loadAssets(assets: List<Asset>)
 
     /**
      * Loads a new scene state into the engine.
+     *
+     * @param state The new scene state to load.
+     * Each [Asset] should be loaded already and passed in via its identifier.
      */
     fun loadVisualNovelSceneState(state: SceneRenderStateIds)
 
     /**
      * Handles a story passage play result, updating the engine's state accordingly.
+     * @param passageData The result of the story passage play to display.
      */
     fun handleStoryPassagePlay(passageData: StoryPassagePlayResult.DataReady)
 

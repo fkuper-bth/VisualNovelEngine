@@ -1,9 +1,9 @@
-package data
+package service
 
-import data.model.assets.Sprite
-import data.model.assets.Text
-import data.model.scene.SceneRenderState
-import data.model.scene.SceneRenderStateIds
+import model.assets.Sprite
+import model.assets.Text
+import model.scene.SceneRenderState
+import model.scene.SceneRenderStateIds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 
-class SceneRenderController(
+internal class SceneRenderController(
     assetStore: AssetStore,
     coroutineScope: CoroutineScope
 ) {

@@ -6,9 +6,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.unit.IntSize
-import data.AssetStore
-import data.model.assets.Sprite
-import data.model.assets.resolveProps
+import service.AssetStore
+import model.assets.Sprite
+import model.assets.resolveProps
 import org.koin.compose.koinInject
 
 @Composable

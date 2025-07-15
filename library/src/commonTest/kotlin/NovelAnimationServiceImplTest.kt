@@ -2,8 +2,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
-import animation.NovelAnimationServiceImpl
-import data.model.assets.Animation
+import service.NovelAnimationServiceImpl
+import model.assets.Animation
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith

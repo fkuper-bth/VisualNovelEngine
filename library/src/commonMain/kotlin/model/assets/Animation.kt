@@ -1,12 +1,15 @@
-package data.model.assets
+package model.assets
 
-import data.AssetStore
+import service.AssetStore
 
+/**
+ * Represents an animation asset.
+ */
 sealed interface Animation : Asset {
     /**
      * A unique identifier for the animation.
      */
-    override val id: String get() = createAnimationIdentifier(baseName, name)
+    override val id: String get() = createIdentifier(baseName, name)
     /**
      * The base name of the animation.
      * Since one sprite can have multiple associated animations,
@@ -32,11 +35,14 @@ sealed interface Animation : Asset {
     val repeat: Boolean
 
     companion object {
-        fun createAnimationIdentifier(baseName: String, animationName: String): String {
+        internal fun createIdentifier(baseName: String, animationName: String): String {
             return "${baseName}_${animationName}"
         }
     }
 
+    /**
+     * Represents a text animation.
+     */
     data class Text(
         override val baseName: String,
         override val name: String,
@@ -45,6 +51,9 @@ sealed interface Animation : Asset {
         override val repeat: Boolean = false,
     ) : Animation
 
+    /**
+     * Represents a sprite sheet animation composed of multiple frames.
+     */
     data class SpriteSheet(
         override val baseName: String,
         override val name: String,
@@ -54,13 +63,23 @@ sealed interface Animation : Asset {
         val animationFrames: List<SpriteAnimationFrame>
     ) : Animation
 
+    /**
+     * Represents a sprite transition animation.
+     * Animates the sprite's transition from one sprite to another.
+     */
     data class SpriteTransition(
         override val baseName: String,
         override val name: String,
         override val durationMillis: Int = 500,
         override val delayMillis: Int = 0,
         override val repeat: Boolean = false,
+        /**
+         * The ID of the sprite from which the transition starts.
+         */
         val fromSpriteId: String,
+        /**
+         * The ID of the sprite to which the transition goes.
+         */
         val toSpriteId: String,
     ) : Animation
 
@@ -71,6 +90,6 @@ sealed interface Animation : Asset {
     )
 }
 
-fun Animation.SpriteTransition.resolveToSprite(assetStore: AssetStore): Sprite? {
+internal fun Animation.SpriteTransition.resolveToSprite(assetStore: AssetStore): Sprite? {
     return assetStore.assets.value[toSpriteId] as? Sprite
 }

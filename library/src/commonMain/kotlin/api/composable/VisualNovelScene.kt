@@ -1,4 +1,4 @@
-package scene
+package api.composable
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -14,8 +14,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.IntSize
-import data.model.assets.Animation
-import api.VisualNovelEngine
+import model.assets.Animation
+import api.engine.VisualNovelEngine
 import etc.di.sharedModule
 import etc.utils.PreviewData
 import fk.visualnovel.engine.library.generated.resources.Res
@@ -25,9 +25,9 @@ import fk.visualnovel.engine.library.generated.resources.bank_environment
 import fk.visualnovel.engine.library.generated.resources.bank_foreground
 import fk.visualnovel.engine.library.generated.resources.glass
 import fk.visualnovel.engine.library.generated.resources.plant
-import data.model.scene.SceneRenderState
-import data.model.scene.SceneRenderStateIds
-import data.model.assets.Sprite
+import model.scene.SceneRenderState
+import model.scene.SceneRenderStateIds
+import model.assets.Sprite
 import org.jetbrains.compose.resources.imageResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.KoinApplication
@@ -35,6 +35,12 @@ import org.koin.compose.koinInject
 import scene.composables.VisualNovelSceneEnvironment
 import scene.composables.VisualNovelSceneMainContent
 
+/**
+ * Composable for displaying a visual novel scene.
+ * @param scene The scene to display.
+ * @param aspectRatio The aspect ratio of the scene.
+ * @param modifier The modifier to apply to the scene.
+ */
 @Composable
 fun VisualNovelScene(
     scene: SceneRenderState,

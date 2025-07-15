@@ -1,4 +1,4 @@
-package data.model.scene
+package model.scene
 
 data class SceneRenderStateIds(
     val backgroundId: String? = null,

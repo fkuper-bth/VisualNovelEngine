@@ -1,4 +1,4 @@
-package data.model.assets
+package model.assets
 
 sealed interface Sound : Asset {
     data class SoundEffect(

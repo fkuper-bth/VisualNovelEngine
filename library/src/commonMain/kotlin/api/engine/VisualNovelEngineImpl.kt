@@ -1,22 +1,23 @@
-package api
+package api.engine
 
-import animation.NovelAnimationService
-import data.AssetStore
-import data.getNow
-import data.model.assets.Animation
-import data.model.assets.Asset
-import data.SceneRenderController
-import data.model.scene.SceneRenderStateIds
-import data.model.assets.Sprite
+import service.NovelAnimationService
+import service.AssetStore
+import service.getNow
+import model.assets.Animation
+import model.assets.Asset
+import service.SceneRenderController
+import model.scene.SceneRenderStateIds
+import model.assets.Sprite
 import data.model.StoryPassageNovelEvent
-import data.model.assets.Text
-import data.model.assets.toText
+import model.assets.Text
+import model.assets.toText
 import fk.story.engine.main.contract.toNovelEventPlayHistory
 import fk.story.engine.main.utils.StoryPassagePlayResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import service.SoundEngine
 
-class VisualNovelEngineImpl(
+internal class VisualNovelEngineImpl(
     private val assetStore: AssetStore,
     private val animationService: NovelAnimationService,
     private val sceneRenderController: SceneRenderController,
@@ -92,12 +93,12 @@ class VisualNovelEngineImpl(
                 // customized on an event basis
                 val characterText = currentEvent.toText() as Text.Character
                 assetStore.addOrUpdateAsset(characterText)
-                val characterAnimationId = Animation.createAnimationIdentifier(
+                val characterAnimationId = Animation.createIdentifier(
                     baseName = currentEvent.characterName,
                     animationName = currentEvent.expression
                 )
                 val animationsToPlay = mutableListOf<Animation>(characterText.animationProps)
-                val characterAnimation = assetStore.getNow<data.model.assets.Animation>(characterAnimationId)
+                val characterAnimation = assetStore.getNow<Animation>(characterAnimationId)
                 if (characterAnimation != null) {
                     animationsToPlay.add(characterAnimation)
                 } else {

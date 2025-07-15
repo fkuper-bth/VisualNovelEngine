@@ -19,7 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import etc.utils.fadingEdge
-import data.model.scene.SceneRenderState
+import model.scene.SceneRenderState
 
 @Composable
 internal fun VisualNovelSceneMainContent(

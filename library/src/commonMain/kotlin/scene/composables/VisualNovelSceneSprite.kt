@@ -20,12 +20,12 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
-import animation.NovelAnimationService
-import data.AssetStore
-import data.model.assets.Animation
-import data.model.assets.Sprite
-import data.model.assets.resolveAnimations
-import data.model.assets.resolveToSprite
+import service.NovelAnimationService
+import service.AssetStore
+import model.assets.Animation
+import model.assets.Sprite
+import model.assets.resolveAnimations
+import model.assets.resolveToSprite
 import org.koin.compose.koinInject
 
 @Composable
@@ -92,7 +92,7 @@ private fun SpriteImage(
     )
 }
 
-data class AnimatedSpriteProperties(
+private data class AnimatedSpriteProperties(
     val offset: Offset,
     val alpha: Float,
     val rotation: Float,

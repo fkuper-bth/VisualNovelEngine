@@ -1,12 +1,12 @@
-package animation
+package service
 
-import data.model.assets.Animation
+import model.assets.Animation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-class NovelAnimationServiceImpl() : NovelAnimationService {
+internal class NovelAnimationServiceImpl() : NovelAnimationService {
     private val _activeAnimations = MutableStateFlow<List<Animation>>(emptyList())
     override val activeAnimations: StateFlow<List<Animation>> = _activeAnimations.asStateFlow()
 

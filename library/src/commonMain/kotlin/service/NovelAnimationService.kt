@@ -1,9 +1,9 @@
-package animation
+package service
 
 import kotlinx.coroutines.flow.StateFlow
-import data.model.assets.Animation
+import model.assets.Animation
 
-interface NovelAnimationService {
+internal interface NovelAnimationService {
     /**
      * A flow emitting the current list of active animations.
      * UI components can observe this flow to render the animations.

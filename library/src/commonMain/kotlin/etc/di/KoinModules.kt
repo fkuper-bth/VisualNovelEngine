@@ -1,18 +1,18 @@
 package etc.di
 
-import animation.NovelAnimationService
-import animation.NovelAnimationServiceImpl
-import api.VisualNovelEngine
-import api.VisualNovelEngineImpl
-import data.AssetStore
-import data.AssetStoreImpl
-import data.SceneRenderController
+import service.NovelAnimationService
+import service.NovelAnimationServiceImpl
+import api.engine.VisualNovelEngine
+import api.engine.VisualNovelEngineImpl
+import service.AssetStore
+import service.AssetStoreImpl
+import service.SceneRenderController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import org.koin.dsl.module
 
-val sharedModule = module {
+internal val sharedModule = module {
     single<AssetStore> {
         AssetStoreImpl()
     }
