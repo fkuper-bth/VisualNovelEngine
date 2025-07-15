@@ -7,7 +7,6 @@ import org.koin.core.context.stopKoin
 import org.koin.dsl.module
 import org.koin.test.KoinTest
 import org.koin.test.get
-import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertNotNull
@@ -15,17 +14,13 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class ExternalIntegrationTest : KoinTest {
-    interface SomeDependency
-    class SomeDependencyImpl : SomeDependency
-
     @BeforeTest
     fun setup() {
+        // clean up external koin application
         stopKoin()
-    }
 
-    @AfterTest
-    fun tearDown() {
-        stopKoin()
+        // clean up internal library state
+        VisualNovelEngine.dispose()
     }
 
     @Test
@@ -49,6 +44,8 @@ class ExternalIntegrationTest : KoinTest {
     @Test
     fun `VisualNovelEngine init in other Koin module - should return VisualNovelEngineImpl`() {
         // Arrange
+        abstract class SomeDependency
+        class SomeDependencyImpl : SomeDependency()
         val consumerModule = module {
             single<SomeDependency> { SomeDependencyImpl() }
             single<VisualNovelEngine> {
