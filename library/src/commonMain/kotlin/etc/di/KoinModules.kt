@@ -3,6 +3,7 @@ package etc.di
 import api.engine.Configuration
 import api.engine.VisualNovelEngine
 import api.engine.VisualNovelEngineImpl
+import fk.story.engine.main.contract.StoryEngine
 import kotlinx.coroutines.CoroutineScope
 import org.koin.dsl.module
 import service.AssetStore
@@ -28,6 +29,9 @@ internal fun createVisualNovelEngineModule(
     }
     single<NovelAnimationService> {
         NovelAnimationServiceImpl()
+    }
+    single<StoryEngine> {
+        StoryEngine.instance
     }
 
     factory<SceneRenderController> {

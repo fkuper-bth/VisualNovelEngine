@@ -99,7 +99,11 @@ private fun AnimatableTextComposable(
 
             // Notify the service that this specific animation command has completed
             // TODO: elevate this service call to a viewmodel and handle exceptions there
-            animationService.notifyAnimationComplete(textAsset.animationProps)
+            try {
+                animationService.notifyAnimationComplete(textAsset.animationProps)
+            } catch (e: IllegalArgumentException) {
+                println("Error trying to notify animation complete: ${e.message}")
+            }
         }
 
         textComposable(displayedText)

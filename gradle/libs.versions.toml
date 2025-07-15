@@ -6,7 +6,7 @@ koin = "4.1.0"
 android-minSdk = "24"
 android-compileSdk = "35"
 androidx-activity = "1.10.1"
-story-engine-version = "1.0.1"
+story-engine-version = "1.0.2"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }

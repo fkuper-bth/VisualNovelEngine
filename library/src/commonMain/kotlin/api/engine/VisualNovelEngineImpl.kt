@@ -160,7 +160,13 @@ internal class VisualNovelEngineImpl(
                 processNextEvent()
             }
 
-            is StoryPassageNovelEvent.Sound -> TODO()
+            is StoryPassageNovelEvent.Sound -> {
+                // TODO: implement this properly, this is just a placeholder implementation
+                soundEngine?.playSoundEffect(currentEvent.name)
+                currentPassageEventIndex++
+                processNextEvent()
+            }
+
             else -> {
                 currentPassageEventIndex++
                 processNextEvent()
