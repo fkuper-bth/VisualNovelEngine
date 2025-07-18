@@ -1,41 +1,53 @@
 package model.assets
 
-import data.model.Story
+import data.service.contract.StoryImportService
 import data.service.utils.StoryImportResult
 import main.contract.StoryEngine
 
-/**
- * Represents a story asset ready for use.
- *
- * @property id The unique identifier for the story.
- * @property jsonContent The JSON content of the story.
- * @property storyEngine The engine used to import the story.
- *
- * @constructor Creates a new [Story] instance.
- * @throws IllegalStateException if the story import fails.
- */
-data class Story(
+import data.model.Story as StoryModel
+import model.assets.Story as StoryAsset
+
+class Story(
     override val id: String,
-    val jsonContent: String,
-    private val storyEngine: StoryEngine = StoryEngine.Companion.instance
-) : Asset {
     /**
      * The content of the story.
-     * @see data.model.Story
+     * @see StoryModel
      */
-    val content: Story
+    val content: StoryModel
+) : Asset {
+    private constructor(content: StoryModel) : this(id = content.uuid, content = content)
 
-    init {
-        val result = storyEngine.importService.importStory(jsonContent)
-        when (result) {
-            is StoryImportResult.Success -> {
-                content = result.story
+    companion object {
+        /**
+         * Tries to create a [model.assets.Story] instance from a JSON string.
+         *
+         * @property jsonContent The JSON content of the story.
+         * @property importService The service used to import the story.
+         *
+         * @throws IllegalStateException if the story import fails.
+         */
+        fun fromJsonContent(
+            jsonContent: String,
+            importService: StoryImportService = StoryEngine.instance.importService
+        ): StoryAsset {
+            val result = importService.importStory(jsonContent)
+            when (result) {
+                is StoryImportResult.Success -> {
+                    return StoryAsset(result.story)
+                }
+                is StoryImportResult.Failure -> {
+                    throw IllegalStateException(
+                        "Story import failed: ${result.reason}"
+                    )
+                }
             }
-            is StoryImportResult.Failure -> {
-                throw IllegalStateException(
-                    "Story import for $id failed: ${result.reason}"
-                )
-            }
+        }
+
+        /**
+         * Creates a [StoryAsset] instance from a [StoryModel].
+         */
+        fun fromStoryContent(content: StoryModel): StoryAsset {
+            return StoryAsset(content)
         }
     }
 }

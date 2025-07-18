@@ -154,7 +154,7 @@ private fun ExampleSceneComposable(
     val mainBankerSprite = mainBankerSpritePre.copy(
         animationIds = listOf(mainBankerSpriteTransition.id)
     )
-    val story = Story(id = "PreviewStory", jsonContent = PreviewData.storyJsonContent)
+    val story = Story.fromJsonContent(PreviewData.storyJsonContent)
 
     LaunchedEffect(Unit) {
         // 1. - load assets
