@@ -223,7 +223,7 @@ internal class VisualNovelStoryPlayerImpl(
             }
 
             is StoryPassageNovelEvent.StoryEnded -> {
-                // TODO: add callback for story end event here
+                storyRenderController.setStoryEnded(currentEvent.playthroughRecord)
             }
 
             is StoryPassageNovelEvent.Custom -> {

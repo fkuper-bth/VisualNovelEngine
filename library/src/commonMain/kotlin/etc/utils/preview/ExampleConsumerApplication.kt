@@ -18,6 +18,7 @@ import fk.visualnovel.engine.library.generated.resources.plant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import main.contract.toPlaythroughDialog
 import model.assets.Animation
 import model.assets.Sprite
 import model.assets.Story
@@ -71,6 +72,7 @@ private class ExampleScenePreviewViewModel(val visualNovelEngine: VisualNovelEng
 private fun ExampleSceneComposable(
     viewModel: ExampleScenePreviewViewModel = koinInject()
 ) {
+    val storyPlayer = viewModel.visualNovelEngine.storyPlayer
     val mainCharacterImage = imageResource(Res.drawable.bank_character_cropped)
     val secondaryCharacterImage = imageResource(Res.drawable.bank_character_alt_cropped)
     val backgroundImage = imageResource(Res.drawable.bank_environment)
@@ -173,7 +175,7 @@ private fun ExampleSceneComposable(
         )
 
         // 2. - load scene state via asset IDs
-        viewModel.visualNovelEngine.storyPlayer.loadVisualNovelSceneState(
+        storyPlayer.loadVisualNovelSceneState(
             state = SceneRenderStateIds(
                 backgroundId = background.id,
                 foregroundId = foreground.id,
@@ -182,8 +184,16 @@ private fun ExampleSceneComposable(
         )
 
         // 3. - handle story passage play
-        viewModel.visualNovelEngine.storyPlayer.playStory(story.id)
+        storyPlayer.playStory(story.id)
     }
 
-    VisualNovelStory(viewModel.visualNovelEngine.storyPlayer)
+    VisualNovelStory(
+        storyPlayer,
+        onStoryEnded = {
+            println("Story ended. Playthrough dialog was:\n${it.toPlaythroughDialog()}")
+        },
+        onPlaybackError = {
+            println("Playback error: $it")
+        },
+    )
 }

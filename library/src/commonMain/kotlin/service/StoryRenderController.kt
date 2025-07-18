@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
+import main.contract.StoryPlaythroughRecord
 import model.assets.Sprite
 import model.assets.Text
 import model.scene.SceneRenderState
@@ -71,5 +72,9 @@ internal class StoryRenderController(
 
     fun setErrorState(message: String) {
         _storyRenderState.value = StoryRenderState.Error(message)
+    }
+
+    fun setStoryEnded(playthroughRecord: StoryPlaythroughRecord) {
+        _storyRenderState.value = StoryRenderState.Ended(playthroughRecord)
     }
 }

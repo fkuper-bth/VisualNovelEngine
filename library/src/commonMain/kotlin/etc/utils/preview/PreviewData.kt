@@ -76,6 +76,10 @@ internal object PreviewData {
             linkText = "Time will tell.",
             targetPassageName = PASSAGE_TWO_NAME
         ),
+        StoryPassageNovelEvent.Link(
+            linkText = "This will cause a playback error!",
+            targetPassageName = "NonExistentPassage"
+        )
     )
 
     private val passageTwoNovelEvents = listOf(

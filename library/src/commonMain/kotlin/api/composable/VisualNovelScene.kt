@@ -10,10 +10,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.IntSize
-import api.engine.VisualNovelEngine
 import data.model.StoryPassageNovelEvent
 import model.scene.SceneRenderState
-import org.koin.compose.KoinIsolatedContext
 import scene.composables.VisualNovelSceneEnvironment
 import scene.composables.VisualNovelSceneMainContent
 
