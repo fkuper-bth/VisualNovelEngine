@@ -3,14 +3,16 @@ package etc.di
 import api.engine.Configuration
 import api.engine.VisualNovelEngine
 import api.engine.VisualNovelEngineImpl
-import fk.story.engine.main.contract.StoryEngine
+import api.engine.VisualNovelStoryPlayer
+import api.engine.VisualNovelStoryPlayerImpl
 import kotlinx.coroutines.CoroutineScope
+import main.contract.StoryEngine
 import org.koin.dsl.module
 import service.AssetStore
 import service.AssetStoreImpl
 import service.NovelAnimationService
 import service.NovelAnimationServiceImpl
-import service.SceneRenderController
+import service.StoryRenderController
 
 /**
  * Creates a Koin module for the visual novel engine.
@@ -34,18 +36,26 @@ internal fun createVisualNovelEngineModule(
         StoryEngine.instance
     }
 
-    factory<SceneRenderController> {
-        SceneRenderController(
+    factory<StoryRenderController> {
+        StoryRenderController(
             assetStore = get(),
             coroutineScope = coroutineScope
         )
     }
-    factory<VisualNovelEngine> {
-        VisualNovelEngineImpl(
+    factory<VisualNovelStoryPlayer> {
+        VisualNovelStoryPlayerImpl(
             assetStore = get(),
             animationService = get(),
-            sceneRenderController = get(),
+            storyRenderController = get(),
+            storyEngine = get(),
+            coroutineScope = coroutineScope,
             soundEngine = null
+        )
+    }
+    factory<VisualNovelEngine> {
+        VisualNovelEngineImpl(
+            storyPlayer = get(),
+            assetStore = get()
         )
     }
 }

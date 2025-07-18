@@ -60,12 +60,14 @@ internal fun VisualNovelSceneTextBoxes(
                     if (it.value.isEmpty()) {
                         // if the link has no text, automatically trigger the link click
                         onLinkClick(it.link)
-                    } else {
-                        LinkTextComposable(
-                            onClick = { onLinkClick(it.link) },
-                            text = it.value
-                        )
+                        return@forEach
                     }
+                    val onClick = if (it.wasChosen) {
+                        { /* if the link was already chosen, do nothing */ }
+                    } else {
+                        { onLinkClick(it.link) }
+                    }
+                    LinkTextComposable(onClick, text = it.value)
                 }
             }
         }

@@ -2,12 +2,10 @@ package etc.utils.preview
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.layout.ContentScale
 import androidx.lifecycle.ViewModel
-import api.composable.VisualNovelScene
+import api.composable.VisualNovelStory
 import api.engine.Configuration
 import api.engine.VisualNovelEngine
 import fk.visualnovel.engine.library.generated.resources.Res
@@ -22,6 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import model.assets.Animation
 import model.assets.Sprite
+import model.assets.Story
 import model.scene.SceneRenderStateIds
 import org.jetbrains.compose.resources.imageResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -72,8 +71,6 @@ private class ExampleScenePreviewViewModel(val visualNovelEngine: VisualNovelEng
 private fun ExampleSceneComposable(
     viewModel: ExampleScenePreviewViewModel = koinInject()
 ) {
-    val scene by viewModel.visualNovelEngine.sceneState.collectAsState()
-
     val mainCharacterImage = imageResource(Res.drawable.bank_character_cropped)
     val secondaryCharacterImage = imageResource(Res.drawable.bank_character_alt_cropped)
     val backgroundImage = imageResource(Res.drawable.bank_environment)
@@ -155,6 +152,7 @@ private fun ExampleSceneComposable(
     val mainBankerSprite = mainBankerSpritePre.copy(
         animationIds = listOf(mainBankerSpriteTransition.id)
     )
+    val story = Story(id = "PreviewStory", jsonContent = PreviewData.storyJsonContent)
 
     LaunchedEffect(Unit) {
         // 1. - load assets
@@ -169,12 +167,13 @@ private fun ExampleSceneComposable(
                 secondaryBankerSprite,
                 mainBankerSpritePost,
                 mainBankerSpriteTransition,
-                mainBankerSprite
+                mainBankerSprite,
+                story
             )
         )
 
         // 2. - load scene state via asset IDs
-        viewModel.visualNovelEngine.loadVisualNovelSceneState(
+        viewModel.visualNovelEngine.storyPlayer.loadVisualNovelSceneState(
             state = SceneRenderStateIds(
                 backgroundId = background.id,
                 foregroundId = foreground.id,
@@ -183,10 +182,8 @@ private fun ExampleSceneComposable(
         )
 
         // 3. - handle story passage play
-        viewModel.visualNovelEngine.handleStoryPassagePlay(PreviewData.passageData)
+        viewModel.visualNovelEngine.storyPlayer.playStory(story.id)
     }
 
-    VisualNovelScene(scene, onLinkClick = {
-        println("Link clicked: '${it.linkText}', target passage: '${it.targetPassageName}'")
-    })
+    VisualNovelStory(viewModel.visualNovelEngine.storyPlayer)
 }

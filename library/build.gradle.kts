@@ -83,6 +83,7 @@ kotlin {
                 implementation(compose.components.uiToolingPreview)
                 implementation(compose.materialIconsExtended)
 
+                implementation(libs.kotlinx.serialization.json)
                 implementation(libs.story.engine)
 
                 api(libs.koin.core)

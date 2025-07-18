@@ -1,14 +1,10 @@
 package api.engine
 
 import etc.di.createVisualNovelEngineModule
-import model.assets.Asset
-import fk.story.engine.main.utils.StoryPassagePlayResult
 import kotlinx.atomicfu.locks.SynchronizedObject
 import kotlinx.atomicfu.locks.synchronized
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.StateFlow
-import model.scene.SceneRenderState
-import model.scene.SceneRenderStateIds
+import model.assets.Asset
 import org.koin.core.KoinApplication
 import org.koin.core.context.stopKoin
 import org.koin.dsl.koinApplication
@@ -26,34 +22,9 @@ interface VisualNovelEngine {
     fun loadAssets(assets: List<Asset>)
 
     /**
-     * Loads a new scene state into the engine.
-     *
-     * @param state The new scene state to load.
-     * Each [Asset] should be loaded already and passed in via its identifier.
+     * An instance of the [VisualNovelStoryPlayer] used to control story playback.
      */
-    fun loadVisualNovelSceneState(state: SceneRenderStateIds)
-
-    /**
-     * Handles a story passage play result, updating the engine's state accordingly.
-     * @param passageData The result of the story passage play to display.
-     */
-    fun handleStoryPassagePlay(passageData: StoryPassagePlayResult.DataReady)
-
-    /**
-     * Clears the current scene and resets internal state.
-     */
-    fun reset()
-
-    /**
-     * The current visual scene state, used by the UI for rendering.
-     */
-    val sceneState: StateFlow<SceneRenderState>
-
-    /**
-     * Whether the engine is currently executing a visual transition (e.g. fade, move).
-     * Useful to block user input during transitions.
-     */
-    val isBusy: StateFlow<Boolean>
+    val storyPlayer: VisualNovelStoryPlayer
 
     companion object {
         internal var koinApp: KoinApplication? = null; private set
@@ -101,7 +72,7 @@ interface VisualNovelEngine {
          */
         fun dispose() {
             synchronized(lock) {
-                engineInstance?.reset()
+                engineInstance?.storyPlayer?.reset()
                 stopKoinInternal()
                 engineInstance = null
             }

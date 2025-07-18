@@ -22,7 +22,7 @@ sealed interface Text : Asset {
     /**
      * Represents an info text asset.
      */
-    class Info(
+    data class Info(
         override val id: String,
         override val value: String
     ) : Text
@@ -30,7 +30,7 @@ sealed interface Text : Asset {
     /**
      * Represents a player text asset.
      */
-    class Player(
+    data class Player(
         override val id: String,
         override val value: String
     ) : Text
@@ -38,7 +38,7 @@ sealed interface Text : Asset {
     /**
      * Represents a character text asset.
      */
-    class Character(
+    data class Character(
         override val id: String,
         override val value: String
     ) : Text
@@ -47,8 +47,9 @@ sealed interface Text : Asset {
      * Represents a link text asset.
      * @param link The link novel event associated with this asset.
      */
-    class Link(
-        val link: StoryPassageNovelEvent.Link
+    data class Link(
+        val link: StoryPassageNovelEvent.Link,
+        val wasChosen: Boolean = false
     ) : Text {
         override val id: String = link.identifier.toString()
         override val value: String = link.linkText ?: ""

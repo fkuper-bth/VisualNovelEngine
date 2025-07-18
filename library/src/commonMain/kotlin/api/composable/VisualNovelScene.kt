@@ -24,45 +24,37 @@ import scene.composables.VisualNovelSceneMainContent
  * @param onLinkClick The callback to invoke when a link is clicked.
  * @param aspectRatio The aspect ratio of the scene.
  * @param modifier The modifier to apply to the scene.
- *
- * @throws IllegalStateException If a [VisualNovelEngine] has not been initialized using [VisualNovelEngine.init].
  */
 @Composable
-fun VisualNovelScene(
+internal fun VisualNovelScene(
     scene: SceneRenderState,
     onLinkClick: (StoryPassageNovelEvent.Link) -> Unit,
-    aspectRatio: Float = 9f / 16f,
+    aspectRatio: Float,
     modifier: Modifier = Modifier
 ) {
-    if (VisualNovelEngine.koinApp == null) {
-        throw IllegalStateException("Engine must be initialized using ")
-    }
-
-    KoinIsolatedContext(context = VisualNovelEngine.koinApp!!) {
-        Box(
-            modifier = modifier
-                .fillMaxWidth()
-                .wrapContentWidth(align = Alignment.CenterHorizontally)
-                .aspectRatio(aspectRatio)
-        ) {
-            scene.background?.let {
-                BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-                    val size = IntSize(constraints.maxWidth, constraints.maxHeight)
-                    VisualNovelSceneEnvironment(environment = it, containerSize = size)
-                }
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .wrapContentWidth(align = Alignment.CenterHorizontally)
+            .aspectRatio(aspectRatio)
+    ) {
+        scene.background?.let {
+            BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                val size = IntSize(constraints.maxWidth, constraints.maxHeight)
+                VisualNovelSceneEnvironment(environment = it, containerSize = size)
             }
+        }
 
-            VisualNovelSceneMainContent(
-                scene = scene,
-                onLinkClick = onLinkClick,
-                modifier = Modifier.fillMaxSize()
-            )
+        VisualNovelSceneMainContent(
+            scene = scene,
+            onLinkClick = onLinkClick,
+            modifier = Modifier.fillMaxSize()
+        )
 
-            scene.foreground?.let {
-                BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-                    val size = IntSize(constraints.maxWidth, constraints.maxHeight)
-                    VisualNovelSceneEnvironment(environment = it, containerSize = size)
-                }
+        scene.foreground?.let {
+            BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                val size = IntSize(constraints.maxWidth, constraints.maxHeight)
+                VisualNovelSceneEnvironment(environment = it, containerSize = size)
             }
         }
     }

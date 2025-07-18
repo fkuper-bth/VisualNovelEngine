@@ -83,7 +83,7 @@ sealed interface Sprite : Asset {
     /**
      * Represents a prop sprite.
      */
-    class Prop(
+    data class Prop(
         override val id: String,
         override val bitmap: ImageBitmap,
         override val spriteScale: Scale = Scale(),

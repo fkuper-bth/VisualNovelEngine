@@ -18,3 +18,7 @@ internal interface AssetStore {
 internal inline fun <reified T : Asset> AssetStore.getNow(id: String): T? {
     return assets.value[id] as? T
 }
+
+internal inline fun <reified T : Asset> AssetStore.getNow(ids: List<String>): List<T>? {
+    return ids.mapNotNull { getNow(it) }
+}

@@ -32,9 +32,9 @@ internal fun InfoTextComposable(text: String) {
 @Composable
 internal fun PlayerTextComposable(text: String) {
     val bubbleShape = RoundedCornerShape(16.dp, 2.dp, 16.dp, 16.dp)
-    val borderColor = MaterialTheme.colorScheme.secondaryContainer
+    val borderColor = MaterialTheme.colorScheme.surface
     val textStyle = MaterialTheme.typography.bodyMedium.copy(
-        color = MaterialTheme.colorScheme.onSecondaryContainer
+        color = MaterialTheme.colorScheme.onSurface
     )
     val modifier = Modifier
         .padding(start = 48.dp, end = 12.dp, top = 12.dp, bottom = 12.dp)
