@@ -5,10 +5,10 @@ import data.model.StoryPassage
 import data.model.StoryPassageNovelEvent
 import kotlinx.serialization.json.Json
 
-internal object PreviewData {
+object PreviewData {
     val storyJsonContent get() = Json.encodeToString<Story>(story)
 
-    private val story get() = Story.createTestInstance(
+    val story get() = Story.createTestInstance(
         name = "TestStory",
         startNode = "1",
         passages = passages.map {

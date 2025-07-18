@@ -21,16 +21,15 @@ class Story(
         /**
          * Tries to create a [model.assets.Story] instance from a JSON string.
          *
-         * @property jsonContent The JSON content of the story.
+         * @property storyJsonContent The JSON content of the story.
          * @property importService The service used to import the story.
-         *
          * @throws IllegalStateException if the story import fails.
          */
         fun fromJsonContent(
-            jsonContent: String,
+            storyJsonContent: String,
             importService: StoryImportService = StoryEngine.instance.importService
         ): StoryAsset {
-            val result = importService.importStory(jsonContent)
+            val result = importService.importStory(storyJsonContent)
             when (result) {
                 is StoryImportResult.Success -> {
                     return StoryAsset(result.story)

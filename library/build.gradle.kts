@@ -82,13 +82,12 @@ kotlin {
                 implementation(compose.components.resources)
                 implementation(compose.components.uiToolingPreview)
                 implementation(compose.materialIconsExtended)
-
                 implementation(libs.kotlinx.serialization.json)
-                implementation(libs.story.engine)
-
-                api(libs.koin.core)
                 implementation(libs.koin.compose)
                 implementation(libs.koin.compose.viewmodel)
+
+                api(libs.story.engine)
+                api(libs.koin.core)
             }
         }
         val commonTest by getting {
