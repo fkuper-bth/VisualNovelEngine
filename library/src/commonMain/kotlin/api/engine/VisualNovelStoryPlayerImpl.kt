@@ -90,7 +90,13 @@ internal class VisualNovelStoryPlayerImpl(
         fun transformNovelEvent(event: StoryPassageNovelEvent): Text? {
             val textAsset = event.toText()
             return when (textAsset) {
-                is Text.Link -> textAsset.copy(wasChosen = true)
+                is Text.Link -> {
+                    if (textAsset.link.linkText == null) {
+                        // Discard links with no link text since they shouldn't to be displayed
+                        return null
+                    }
+                    textAsset.copy(wasChosen = true)
+                }
                 else -> textAsset
             }
         }
