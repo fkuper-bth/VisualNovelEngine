@@ -49,6 +49,7 @@ sealed interface Animation : Asset {
         override val durationMillis: Int = 25,
         override val delayMillis: Int = 0,
         override val repeat: Boolean = false,
+        val content: String = ""
     ) : Animation
 
     /**

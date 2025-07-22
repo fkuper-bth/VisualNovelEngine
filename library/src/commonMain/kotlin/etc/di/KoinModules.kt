@@ -30,7 +30,9 @@ internal fun createVisualNovelEngineModule(
         AssetStoreImpl()
     }
     single<NovelAnimationService> {
-        NovelAnimationServiceImpl()
+        NovelAnimationServiceImpl(
+            coroutineScope = coroutineScope
+        )
     }
     single<StoryEngine> {
         StoryEngine.instance

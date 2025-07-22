@@ -169,7 +169,7 @@ internal class VisualNovelStoryPlayerImpl(
 
                 animationService.playAnimationBatch(
                     animations = animationsToPlay,
-                    onAllAnimationsComplete = { onAnimationBatchCompleted(it) }
+                    onAllAnimationsComplete = ::onAnimationBatchCompleted
                 )
                 storyRenderController.setScene(
                     sceneIds.value.copy(
@@ -187,7 +187,7 @@ internal class VisualNovelStoryPlayerImpl(
 
                 animationService.playAnimationBatch(
                     animations = listOf(infoText.animationProps),
-                    onAllAnimationsComplete = { onAnimationBatchCompleted(it) }
+                    onAllAnimationsComplete = ::onAnimationBatchCompleted
                 )
                 storyRenderController.setScene(
                     sceneIds.value.copy(
@@ -204,7 +204,7 @@ internal class VisualNovelStoryPlayerImpl(
 
                 animationService.playAnimationBatch(
                     animations = listOf(playerText.animationProps),
-                    onAllAnimationsComplete = { onAnimationBatchCompleted(it) }
+                    onAllAnimationsComplete = ::onAnimationBatchCompleted
                 )
                 storyRenderController.setScene(
                     sceneIds.value.copy(
@@ -245,7 +245,15 @@ internal class VisualNovelStoryPlayerImpl(
         }
     }
 
-    private fun onAnimationBatchCompleted(completedAnimations: List<Animation>) {
+    private fun onAnimationBatchCompleted(
+        completedAnimations: List<Animation>,
+        timedOut: Boolean
+    ) {
+        if (timedOut) {
+            println("An animation batch has timed out... processing any that have completed " +
+                    "correctly and continuing processing.")
+        }
+
         // Perform any necessary updates to the scene state resulting from the completed animations
         completedAnimations.forEach { animation ->
             when (animation) {

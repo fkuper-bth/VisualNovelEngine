@@ -16,7 +16,8 @@ sealed interface Text : Asset {
      */
     val animationProps: Animation.Text get() = Animation.Text(
         baseName = "Text",
-        name = id
+        name = id,
+        content = value
     )
 
     /**

@@ -1,9 +1,11 @@
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
-import service.NovelAnimationServiceImpl
 import model.assets.Animation
+import service.NovelAnimationServiceImpl
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -12,7 +14,8 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class NovelAnimationServiceImplTest {
-    private val underTest = NovelAnimationServiceImpl()
+    private val scope = TestScope()
+    private val underTest = NovelAnimationServiceImpl(scope)
 
     @Test
     fun `getActiveAnimations initial state`() {
@@ -36,7 +39,9 @@ class NovelAnimationServiceImplTest {
         // Act
         underTest.playAnimationBatch(
             animations = listOf(),
-            onAllAnimationsComplete = { onAllAnimationsCompleteCalled = true }
+            onAllAnimationsComplete = { animations, timedOut ->
+                onAllAnimationsCompleteCalled = true
+            }
         )
         val activeAnimations = underTest.activeAnimations.value
 
@@ -60,7 +65,7 @@ class NovelAnimationServiceImplTest {
         // Act & Assert
 
         // Before notifying about animation completion, they should be active
-        underTest.playAnimationBatch(animations, onAllAnimationsComplete = {
+        underTest.playAnimationBatch(animations, onAllAnimationsComplete = { animations, timedOut ->
             onAllAnimationsCompleteCalled = true
         })
         var activeAnimations = underTest.activeAnimations.value
@@ -95,15 +100,21 @@ class NovelAnimationServiceImplTest {
         // Act & Assert
 
         // Queue first batch, check that it's active
-        underTest.playAnimationBatch(firstBatch, onAllAnimationsComplete = {
-          onFirstBatchCompletedCalled = true
-        })
+        underTest.playAnimationBatch(
+            animations = firstBatch,
+            onAllAnimationsComplete = { animations, timedOut ->
+                onFirstBatchCompletedCalled = true
+            }
+        )
         assertEquals(firstBatch, underTest.activeAnimations.value)
 
         // Queue second batch before completing the first one
-        underTest.playAnimationBatch(secondBatch, onAllAnimationsComplete = {
-            onSecondBatchCompletedCalled = true
-        })
+        underTest.playAnimationBatch(
+            animations = secondBatch,
+            onAllAnimationsComplete = { animations, timedOut ->
+                onSecondBatchCompletedCalled = true
+            }
+        )
         assertEquals(secondBatch, underTest.activeAnimations.value)
         secondBatch.forEach { underTest.notifyAnimationComplete(it) }
         assertTrue(onSecondBatchCompletedCalled)
@@ -124,7 +135,10 @@ class NovelAnimationServiceImplTest {
 
         // Act & Assert
         assertFailsWith<IllegalArgumentException> {
-            underTest.playAnimationBatch(animations, onAllAnimationsComplete = {})
+            underTest.playAnimationBatch(
+                animations = animations,
+                onAllAnimationsComplete = { animations, timedOut -> }
+            )
         }
     }
 
@@ -142,9 +156,12 @@ class NovelAnimationServiceImplTest {
         // Act & Assert
 
         // Before notifying about animation completion, they should all be active
-        underTest.playAnimationBatch(animations, onAllAnimationsComplete = {
-            onAllAnimationsCompleteCalled = true
-        })
+        underTest.playAnimationBatch(
+            animations = animations,
+            onAllAnimationsComplete = { animations, timedOut ->
+                onAllAnimationsCompleteCalled = true
+            }
+        )
         assertEquals(animations.toList(), underTest.activeAnimations.value)
 
         // Notify completion of the first command
@@ -162,17 +179,17 @@ class NovelAnimationServiceImplTest {
         val animations = listOf(Animation.Text("First", "Text"))
         val nonBatchAnimation = Animation.Text("Second", "Text")
         var onAllAnimationsCompleteCalled = false
-        underTest.playAnimationBatch(animations, onAllAnimationsComplete = {
-            onAllAnimationsCompleteCalled = true
-        })
+        underTest.playAnimationBatch(
+            animations = animations,
+            onAllAnimationsComplete = { animations, timedOut ->
+                onAllAnimationsCompleteCalled = true
+            }
+        )
 
-        // Act & Assert
+        // Act
+        underTest.notifyAnimationComplete(nonBatchAnimation)
 
-        // notifyAnimationComplete should fail with an exception
-        assertFailsWith<IllegalArgumentException> {
-            underTest.notifyAnimationComplete(nonBatchAnimation)
-        }
-
+        // Assert
         // activeAnimations state should remain unchanged
         assertEquals(animations.first(), underTest.activeAnimations.value.first())
         assertFalse(onAllAnimationsCompleteCalled)
@@ -186,9 +203,12 @@ class NovelAnimationServiceImplTest {
         // Arrange
         val animation = Animation.Text("First", "Text")
         var onAllAnimationsCompleteCalled = false
-        underTest.playAnimationBatch(listOf(animation), onAllAnimationsComplete = {
-            onAllAnimationsCompleteCalled = true
-        })
+        underTest.playAnimationBatch(
+            animations = listOf(animation),
+            onAllAnimationsComplete = { animations, timedOut ->
+                onAllAnimationsCompleteCalled = true
+            }
+        )
 
         // Act & Assert
 
@@ -199,9 +219,7 @@ class NovelAnimationServiceImplTest {
         // Notify with the same commandId again, should fail with an exception
         // and callback should not be invoked again
         onAllAnimationsCompleteCalled = false
-        assertFailsWith<IllegalArgumentException> {
-            underTest.notifyAnimationComplete(animation)
-        }
+        underTest.notifyAnimationComplete(animation)
         assertFalse(onAllAnimationsCompleteCalled)
     }
 
@@ -214,10 +232,11 @@ class NovelAnimationServiceImplTest {
         val animation = Animation.Text("First", "Text")
         assertTrue(underTest.activeAnimations.value.isEmpty())
 
-        // Act & Assert
-        assertFailsWith<IllegalArgumentException> {
-            underTest.notifyAnimationComplete(animation)
-        }
+        // Act
+        underTest.notifyAnimationComplete(animation)
+
+        // Assert
+        assertTrue(underTest.activeAnimations.value.isEmpty())
     }
 
     @Test
@@ -233,9 +252,12 @@ class NovelAnimationServiceImplTest {
             Animation.Text("Third", "Text")
         )
         var onAllAnimationsCompleteCalled = false
-        underTest.playAnimationBatch(animations, onAllAnimationsComplete = {
-            onAllAnimationsCompleteCalled = true
-        })
+        underTest.playAnimationBatch(
+            animations = animations,
+            onAllAnimationsComplete = { animations, timedOut ->
+                onAllAnimationsCompleteCalled = true
+            }
+        )
 
         // Act & Assert
 
@@ -266,9 +288,12 @@ class NovelAnimationServiceImplTest {
             Animation.Text("Third", "Text")
         )
         var onAllAnimationsCompleteCalled = false
-        underTest.playAnimationBatch(animations, onAllAnimationsComplete = {
-            onAllAnimationsCompleteCalled = true
-        })
+        underTest.playAnimationBatch(
+            animations = animations,
+            onAllAnimationsComplete = { animations, timedOut ->
+                onAllAnimationsCompleteCalled = true
+            }
+        )
 
         // Act & Assert
 
@@ -308,9 +333,12 @@ class NovelAnimationServiceImplTest {
             Animation.Text("Third", "Text")
         )
         var onAllAnimationsCompleteCalled = false
-        underTest.playAnimationBatch(animations, onAllAnimationsComplete = {
-            onAllAnimationsCompleteCalled = true
-        })
+        underTest.playAnimationBatch(
+            animations = animations,
+            onAllAnimationsComplete = { animations, timedOut ->
+                onAllAnimationsCompleteCalled = true
+            }
+        )
 
         // Act & Assert
         underTest.notifyAnimationComplete(animations.first())
@@ -337,18 +365,24 @@ class NovelAnimationServiceImplTest {
             Animation.Text("Fifth", "Text")
         )
         var onAllAnimationsCompleteCalled = false
-        underTest.playAnimationBatch(firstBatch, onAllAnimationsComplete = {
-            onAllAnimationsCompleteCalled = true
-        })
+        underTest.playAnimationBatch(
+            animations = firstBatch,
+            onAllAnimationsComplete = { animations, timedOut ->
+                onAllAnimationsCompleteCalled = true
+            }
+        )
 
         // Act & Assert
         underTest.notifyAnimationComplete(firstBatch.first())
         assertEquals(2, underTest.activeAnimations.value.size)
         assertFalse(onAllAnimationsCompleteCalled)
 
-        underTest.playAnimationBatch(secondBatch, onAllAnimationsComplete = {
-            onAllAnimationsCompleteCalled = true
-        })
+        underTest.playAnimationBatch(
+            animations = secondBatch,
+            onAllAnimationsComplete = { animations, timedOut ->
+                onAllAnimationsCompleteCalled = true
+            }
+        )
         assertEquals(secondBatch, underTest.activeAnimations.value)
         assertFalse(onAllAnimationsCompleteCalled)
 
@@ -373,9 +407,12 @@ class NovelAnimationServiceImplTest {
         var onAllAnimationsCompleteCalled = false
 
         // Act & Assert
-        underTest.playAnimationBatch(firstBatch, onAllAnimationsComplete = {
-            onAllAnimationsCompleteCalled = true
-        })
+        underTest.playAnimationBatch(
+            animations = firstBatch,
+            onAllAnimationsComplete = { animations, timedOut ->
+                onAllAnimationsCompleteCalled = true
+            }
+        )
         assertEquals(firstBatch, underTest.activeAnimations.value)
         assertFalse(onAllAnimationsCompleteCalled)
 
@@ -383,9 +420,12 @@ class NovelAnimationServiceImplTest {
         assertTrue(underTest.activeAnimations.value.isEmpty())
         assertFalse(onAllAnimationsCompleteCalled)
 
-        underTest.playAnimationBatch(secondBatch, onAllAnimationsComplete = {
-            onAllAnimationsCompleteCalled = true
-        })
+        underTest.playAnimationBatch(
+            animations = secondBatch,
+            onAllAnimationsComplete = { animations, timedOut ->
+                onAllAnimationsCompleteCalled = true
+            }
+        )
         assertEquals(secondBatch, underTest.activeAnimations.value)
         assertFalse(onAllAnimationsCompleteCalled)
     }
@@ -414,7 +454,10 @@ class NovelAnimationServiceImplTest {
         )
 
         // Act & Assert
-        underTest.playAnimationBatch(animations, onAllAnimationsComplete = {})
+        underTest.playAnimationBatch(
+            animations = animations,
+            onAllAnimationsComplete = { animations, timedOut -> }
+        )
         advanceUntilIdle()
         assertEquals(2, collectedUpdates.size)
         assertEquals(animations, collectedUpdates.last())
@@ -449,9 +492,12 @@ class NovelAnimationServiceImplTest {
 
         // Act & Assert
         // After initial play, the activeAnimations should be updated
-        underTest.playAnimationBatch(animations, onAllAnimationsComplete = {
-            onAllAnimationsCompleteCalled = true
-        })
+        underTest.playAnimationBatch(
+            animations = animations,
+            onAllAnimationsComplete = { animations, timedOut ->
+                onAllAnimationsCompleteCalled = true
+            }
+        )
         advanceUntilIdle()
         assertEquals(2, collectedUpdates.size)
         assertEquals(animations.toList(), collectedUpdates.last())
@@ -495,7 +541,10 @@ class NovelAnimationServiceImplTest {
         )
 
         // after initial play, the activeAnimations should be updated
-        underTest.playAnimationBatch(animations, onAllAnimationsComplete = {})
+        underTest.playAnimationBatch(
+            animations = animations,
+            onAllAnimationsComplete = { animations, timedOut -> }
+        )
         advanceUntilIdle()
         assertEquals(2, collectedUpdates.size)
         assertEquals(animations, collectedUpdates.last())
@@ -526,7 +575,7 @@ class NovelAnimationServiceImplTest {
         }
         underTest.playAnimationBatch(
             animations = listOf(animation),
-            onAllAnimationsComplete = { onAllAnimationsComplete() }
+            onAllAnimationsComplete = { animations, timedOut -> onAllAnimationsComplete() }
         )
         assertEquals(
             animation,
@@ -556,9 +605,12 @@ class NovelAnimationServiceImplTest {
         // test playing a new batch to ensure the service is still functional
         val nextAnimation = Animation.Text("Second", "Text")
         var nextCallbackInvoked = false
-        underTest.playAnimationBatch(listOf(nextAnimation), onAllAnimationsComplete = {
-            nextCallbackInvoked = true
-        })
+        underTest.playAnimationBatch(
+            animations = listOf(nextAnimation),
+            onAllAnimationsComplete = { animations, timedOut ->
+                nextCallbackInvoked = true
+            }
+        )
 
         assertEquals(
             nextAnimation,
@@ -591,7 +643,7 @@ class NovelAnimationServiceImplTest {
             Animation.Text("Third", "Text")
         )
         var succeededAnimations = listOf<Animation>()
-        val onAllAnimationsComplete = { playedAnimations: List<Animation> ->
+        val onAllAnimationsComplete = { playedAnimations: List<Animation>, timedOut: Boolean ->
             succeededAnimations = playedAnimations
         }
 
@@ -611,7 +663,7 @@ class NovelAnimationServiceImplTest {
     fun `playAnimationBatch - onAllAnimationsComplete with empty batch should return empty list`() {
         // Arrange
         var succeededAnimations: List<Animation>? = null
-        val onAllAnimationsComplete = { playedAnimations: List<Animation> ->
+        val onAllAnimationsComplete = { playedAnimations: List<Animation>, timedOut: Boolean ->
             succeededAnimations = playedAnimations
         }
 
@@ -639,17 +691,13 @@ class NovelAnimationServiceImplTest {
         )
         val failedAnimation = Animation.Text("Fourth", "Text")
         var callbackResult = listOf<Animation>()
-        val onAllAnimationsComplete = { playedAnimations: List<Animation> ->
+        val onAllAnimationsComplete = { playedAnimations: List<Animation>, timedOut: Boolean ->
             callbackResult = playedAnimations
         }
 
-        // Act & Assert
+        // Act
         underTest.playAnimationBatch(successfulAnimations, onAllAnimationsComplete)
-        assertFailsWith<IllegalArgumentException>(
-            message = "Playing with an animation not in current batch should throw an exception."
-        ) {
-            underTest.notifyAnimationComplete(failedAnimation)
-        }
+        underTest.notifyAnimationComplete(failedAnimation)
         successfulAnimations.forEach(underTest::notifyAnimationComplete)
 
         // Assert
@@ -662,5 +710,33 @@ class NovelAnimationServiceImplTest {
             callbackResult,
             "onAllAnimationsComplete should contain all successfully played animations."
         )
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `playAnimationBatch - timeout should be called after the timeout period`() = runTest {
+        // Arrange
+        val underTest = NovelAnimationServiceImpl(this)
+        val animation = Animation.SpriteTransition(
+            baseName = "SomeCharacter",
+            name = "Dancing",
+            durationMillis = 50,
+            fromSpriteId = "SomeSpriteId",
+            toSpriteId = "SomeOtherSpriteId"
+        )
+        var successfulAnimations = listOf<Animation>()
+        var batchTimedOut = false
+        val onAllAnimationsComplete = { playedAnimations: List<Animation>, timedOut: Boolean ->
+            successfulAnimations = playedAnimations
+            batchTimedOut = timedOut
+        }
+
+        // Act
+        underTest.playAnimationBatch(listOf(animation), onAllAnimationsComplete)
+        advanceTimeBy(200)
+
+        // Assert
+        assertTrue(batchTimedOut)
+        assertTrue(successfulAnimations.isEmpty())
     }
 }

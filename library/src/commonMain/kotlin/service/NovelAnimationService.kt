@@ -3,6 +3,9 @@ package service
 import kotlinx.coroutines.flow.StateFlow
 import model.assets.Animation
 
+internal typealias AnimationBatchCompletionHandler =
+            (playedAnimations: List<Animation>, timedOut: Boolean) -> Unit
+
 internal interface NovelAnimationService {
     /**
      * A flow emitting the current list of active animations.
@@ -20,12 +23,13 @@ internal interface NovelAnimationService {
      * @param animations Animations to play. These should have unique IDs.
      * @param onAllAnimationsComplete A callback to be invoked when all submitted commands are
      * complete. Includes a list of completed animations which can be used to perform any necessary
-     * state updates.
+     * state updates and a boolean indicating whether the batch timed out before all animation could
+     * complete.
      * @throws IllegalArgumentException If the provided batch contains duplicate IDs.
      */
     fun playAnimationBatch(
         animations: List<Animation>,
-        onAllAnimationsComplete: (playedAnimations: List<Animation>) -> Unit
+        onAllAnimationsComplete: AnimationBatchCompletionHandler
     )
 
     /**
