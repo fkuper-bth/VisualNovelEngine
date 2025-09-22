@@ -20,6 +20,12 @@ can be found [here](https://github.com/fkuper-bth).
 A more detailed explanation of this repository and how it relates to the other projects can also be
 found in the [thesis](https://github.com/fkuper-bth/Thesis) though it is written in German.
 
+## Asset licensing
+
+Assets such as the images used to realize this project found in [src/commonMain/composeResources](library/src/commonMain/composeResources)
+were graciously provided © 2025 by [Lab für Sozioinformatik Prof. Dr. Nicola Marsden | Hochschule Heilbronn](https://www.hs-heilbronn.de/de/lab-sozioinformatik)
+and are licensed under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
+
 ## Publishing
 
 Currently this project is only set up to publish in a local maven repository 
